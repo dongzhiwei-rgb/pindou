@@ -1,4 +1,4 @@
-<!--
+﻿<!--
 文件：LINUX_DEPLOY.md
 用途：说明拼了个豆 Linux 发布包的上传、配置、启动、更新与排错方法。
 核心职责：让服务器运维人员无需本地开发环境即可完成 Docker Compose 部署（强制 HTTPS + 安全基线）。
@@ -30,7 +30,7 @@
 
 ```bash
 mkdir -p /opt/pindou-studio
-tar -xzf pindou-studio-linux-20260911-v1.tar.gz -C /opt/pindou-studio --strip-components=1
+tar -xzf pindou-studio-linux-20260911-v2.tar.gz -C /opt/pindou-studio --strip-components=1
 cd /opt/pindou-studio
 ```
 
