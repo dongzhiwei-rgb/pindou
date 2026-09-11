@@ -30,7 +30,7 @@
 
 ```bash
 mkdir -p /opt/pindou-studio
-tar -xzf pindou-studio-linux-20260911-v2.tar.gz -C /opt/pindou-studio --strip-components=1
+tar -xzf pindou-studio-linux-20260911-v3.tar.gz -C /opt/pindou-studio --strip-components=1
 cd /opt/pindou-studio
 ```
 
