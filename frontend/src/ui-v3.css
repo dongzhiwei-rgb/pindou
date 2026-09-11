@@ -1083,6 +1083,20 @@ dialog,
   box-shadow: var(--shadow-3-v3);
 }
 
+.developer-dialog-content .developer-version {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  border: 1px solid var(--mint-300);
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: var(--mint-50);
+  color: var(--brand-700);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
 dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px); }
 
 .workspace-dialog-header {

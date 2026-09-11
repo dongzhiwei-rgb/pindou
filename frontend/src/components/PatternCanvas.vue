@@ -3,7 +3,7 @@
   用途：高性能绘制和编辑拼豆网格画板。
   核心职责：仅渲染可见单元格，处理画笔/橡皮/复制颜色、撤销笔画、拖拽以及滚轮/双指缩放。
   版权：@董志伟-联系方式-makabak1204
-  最后修改：2026-09-03
+  最后修改：2026-09-11
 -->
 
 <script setup lang="ts">
@@ -13,6 +13,10 @@ import { COLLAB_COLORS, useCollabStore } from '../stores/collab'
 import { useEditorStore } from '../stores/editor'
 import { useSoundStore } from '../stores/sound'
 import AppIcon from './AppIcon.vue'
+
+const emit = defineEmits<{
+  'minimum-zoom-change': [cellSize: number]
+}>()
 
 const store = useEditorStore()
 const {
@@ -34,6 +38,7 @@ const paintValue = ref(-1)
 const BASE_CELL_SIZE = 20
 const MIN_CELL_SIZE = 2
 const MAX_CELL_SIZE = 40
+const adaptiveMinimumCellSize = ref(MIN_CELL_SIZE)
 // PC 端（鼠标设备）键盘平移画布：WASD / 方向键，按住 Shift 加速；不切换交互模式，保持当前画笔/橡皮等工具。
 const isFinePointer = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: fine)').matches
 const KEYBOARD_PAN_STEP = 60
@@ -182,23 +187,42 @@ function centerPatternInViewport(): void {
 }
 
 /**
+ * 最小缩放等于当前可视区域能够完整容纳画板的比例。
+ * 只限制继续缩小，放大上限仍保持 200%；视口或坐标边距变化时会重新计算。
+ */
+function calculateAdaptiveMinimumCellSize(): number {
+  const container = scrollContainer.value
+  if (!container || !hasPattern.value) return MIN_CELL_SIZE
+  const horizontalPadding = showCoordinates.value ? 64 : 32
+  const verticalPadding = showCoordinates.value ? 52 : 32
+  const fitLimit = isFinePointer ? 14 : MAX_CELL_SIZE
+  const availableWidth = Math.max(1, container.clientWidth - horizontalPadding)
+  const availableHeight = Math.max(1, container.clientHeight - verticalPadding)
+  return Math.min(MAX_CELL_SIZE, Math.max(MIN_CELL_SIZE, Math.floor(Math.min(
+    availableWidth / Math.max(1, width.value),
+    availableHeight / Math.max(1, height.value),
+    fitLimit,
+  ))))
+}
+
+function refreshAdaptiveMinimum(enforce = true): number {
+  const nextMinimum = calculateAdaptiveMinimumCellSize()
+  if (adaptiveMinimumCellSize.value !== nextMinimum) {
+    adaptiveMinimumCellSize.value = nextMinimum
+    emit('minimum-zoom-change', nextMinimum)
+  }
+  if (enforce && cellSize.value < nextMinimum) void setZoomFromCenter(nextMinimum)
+  return nextMinimum
+}
+
+/**
  * 按当前可视区域计算能完整容纳画板的单格尺寸，并把画板居中。
  * 生成大图纸时主动调用，避免用户进入拖拽模式后还要先手动缩小寻找画板边缘。
  */
 async function fitPatternInViewport(): Promise<void> {
   const container = scrollContainer.value
   if (!container || !hasPattern.value) return
-  const horizontalPadding = showCoordinates.value ? 64 : 32
-  const verticalPadding = showCoordinates.value ? 52 : 32
-  // 桌面工作台保留设计稿中的画布呼吸区；“适应画布”只负责完整显示，
-  // 不把常见 32×32 图纸放大到占满整个舞台。移动端仍按可用宽高自适应。
-  const fitLimit = isFinePointer ? 14 : MAX_CELL_SIZE
-  const fittedSize = Math.floor(Math.min(
-    (container.clientWidth - horizontalPadding) / Math.max(1, width.value),
-    (container.clientHeight - verticalPadding) / Math.max(1, height.value),
-    fitLimit,
-  ))
-  cellSize.value = Math.max(MIN_CELL_SIZE, fittedSize)
+  cellSize.value = refreshAdaptiveMinimum(false)
   await nextTick()
   centerPatternInViewport()
 }
@@ -210,7 +234,7 @@ async function fitPatternInViewport(): Promise<void> {
 async function setZoomFromCenter(nextSize: number): Promise<void> {
   const container = scrollContainer.value
   const previousSize = cellSize.value
-  const normalizedSize = Math.min(MAX_CELL_SIZE, Math.max(MIN_CELL_SIZE, Math.round(nextSize)))
+  const normalizedSize = Math.min(MAX_CELL_SIZE, Math.max(adaptiveMinimumCellSize.value, Math.round(nextSize)))
   if (!container || normalizedSize === previousSize) return
   const centerX = container.clientWidth / 2
   const centerY = container.clientHeight / 2
@@ -558,7 +582,7 @@ function pointerMove(event: PointerEvent): void {
     if (panPointers.size >= 2) {
       const distance = pointerDistance()
       if (pinchStartDistance > 0) {
-        cellSize.value = Math.min(MAX_CELL_SIZE, Math.max(MIN_CELL_SIZE, Math.round(pinchStartCellSize * distance / pinchStartDistance)))
+        cellSize.value = Math.min(MAX_CELL_SIZE, Math.max(adaptiveMinimumCellSize.value, Math.round(pinchStartCellSize * distance / pinchStartDistance)))
       }
       return
     }
@@ -635,7 +659,7 @@ async function wheelZoom(event: WheelEvent): Promise<void> {
   event.preventDefault()
 
   const previousSize = cellSize.value
-  const nextSize = Math.min(MAX_CELL_SIZE, Math.max(MIN_CELL_SIZE, previousSize + (event.deltaY < 0 ? 2 : -2)))
+  const nextSize = Math.min(MAX_CELL_SIZE, Math.max(adaptiveMinimumCellSize.value, previousSize + (event.deltaY < 0 ? 2 : -2)))
   if (nextSize === previousSize) return
 
   // 缩放后尽量保持鼠标指向的图纸位置不动，减少反复拖回目标区域。
@@ -714,9 +738,10 @@ function preventBrowserGesture(event: Event): void {
 watch([contentRevision, colors, width, height, cellSize, beadShape, showCodes, showGrid, showBoardSplit, selectedBoard], scheduleDraw, { deep: false })
 // 联机格子锁变化时重绘成员颜色描框（锁为非响应式 Map，由版本号驱动）。
 watch(locksVersion, () => scheduleDraw())
-watch([width, height, hasPattern], async () => {
+watch([width, height, hasPattern, showCoordinates], async () => {
   coordinateIndex.value = -1
   await nextTick()
+  refreshAdaptiveMinimum()
   centerPatternInViewport()
 })
 watch(interactionMode, () => {
@@ -736,9 +761,13 @@ onMounted(() => {
     scrollContainer.value.addEventListener('touchmove', preventBrowserPinch, { passive: false })
     scrollContainer.value.addEventListener('gesturestart', preventBrowserGesture, { passive: false })
     scrollContainer.value.addEventListener('gesturechange', preventBrowserGesture, { passive: false })
-    viewportObserver = new ResizeObserver(() => updateViewportGutters())
+    viewportObserver = new ResizeObserver(() => {
+      refreshAdaptiveMinimum()
+      updateViewportGutters()
+    })
     viewportObserver.observe(scrollContainer.value)
   }
+  refreshAdaptiveMinimum()
   centerPatternInViewport()
   scheduleDraw()
 })

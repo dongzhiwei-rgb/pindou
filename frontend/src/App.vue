@@ -460,6 +460,7 @@ const replacementFromIndex = ref(-1)
 const replacementToIndex = ref(0)
 const exportSelection = reactive({ png: true, xlsx: true, csv: false, json: false })
 const developerContact = reactive<DeveloperContact>({ weChatId: '', qrCodeUrl: '' })
+const applicationVersion = 'V 0.2.1'
 const gridPresets = [16, 24, 32, 48, 64, 80, 96, 128]
 const generationSteps: ReadonlyArray<{ step: GenerationStep; short: string; label: string }> = [
   { step: 1, short: '上传', label: '上传图片' },
@@ -524,6 +525,12 @@ function openCanvasMetaDialog(): void {
   canvasMetaDialog.value?.showModal()
 }
 const zoomPercent = computed(() => Math.round(cellSize.value / 20 * 100))
+const minimumCanvasCellSize = ref(2)
+const minimumZoomPercent = computed(() => Math.round(minimumCanvasCellSize.value / 20 * 100))
+
+function updateMinimumCanvasZoom(nextSize: number): void {
+  minimumCanvasCellSize.value = Math.min(40, Math.max(2, Math.round(nextSize)))
+}
 const cropAspectRatio = computed(() => {
   const specs = pendingDetectedSpecs.value
   const draftWidth = specs?.width ?? generationDraft.width
@@ -3027,7 +3034,7 @@ function changeCanvasZoom(event: Event): void {
 
 function changeCanvasZoomPercent(event: Event): void {
   const input = event.target as HTMLInputElement
-  const percent = Math.min(200, Math.max(10, Number(input.value) || zoomPercent.value))
+  const percent = Math.min(200, Math.max(minimumZoomPercent.value, Number(input.value) || zoomPercent.value))
   input.value = String(percent)
   void patternCanvas.value?.setZoomFromCenter(percent / 5)
 }
@@ -3696,6 +3703,7 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
             />
             <p v-else class="developer-contact-empty">暂未配置微信二维码</p>
             <p>长按二维码添加微信咨询</p>
+            <p class="developer-version">版本号 {{ applicationVersion }}</p>
           </div>
           <footer class="workspace-dialog-actions developer-dialog-actions">
             <button class="secondary" type="button" @click="developerDialog?.close()"><AppIcon name="close" />关闭</button>
@@ -4436,7 +4444,7 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
         </div>
 
         <div class="canvas-frame panel">
-          <PatternCanvas ref="patternCanvas" />
+          <PatternCanvas ref="patternCanvas" @minimum-zoom-change="updateMinimumCanvasZoom" />
           <div class="canvas-command-dock">
             <div v-if="hasPattern" class="canvas-view-controls">
               <div class="canvas-bead-shape-toggle" role="radiogroup" aria-label="豆子显示形状">
@@ -4454,7 +4462,7 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
                 <input
                   :value="cellSize"
                   type="range"
-                  min="2"
+                  :min="minimumCanvasCellSize"
                   max="40"
                   step="1"
                   aria-label="调整画板缩放比例"
@@ -4464,7 +4472,7 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
                   <input
                     :value="zoomPercent"
                     type="number"
-                    min="10"
+                    :min="minimumZoomPercent"
                     max="200"
                     step="5"
                     inputmode="numeric"
