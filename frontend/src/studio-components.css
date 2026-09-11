@@ -1,0 +1,767 @@
+/**
+ * 文件：studio-components.css
+ * 用途：统一“拼了个豆”全部功能界面、弹窗、浮层、轻提示与表单控件的视觉规范。
+ * 核心职责：在不改动业务逻辑的前提下，以概念稿为最高视觉依据，收敛历史样式差异并完成多端适配。
+ * 版权：@董志伟-联系方式-makabak1204
+ * 最后修改：2026-08-28
+ */
+
+:root {
+  --ui-paper: #fffefa;
+  --ui-paper-soft: #f8f5ef;
+  --ui-paper-strong: #f2eee6;
+  --ui-ink: #263a32;
+  --ui-muted: #7e8983;
+  --ui-line: rgba(211, 206, 196, .82);
+  --ui-line-strong: rgba(185, 192, 184, .92);
+  --ui-green: #145c47;
+  --ui-green-hover: #0f4f3c;
+  --ui-mint: #bfe8d8;
+  --ui-mint-soft: #e9f8f1;
+  --ui-coral: #ff6b5e;
+  --ui-coral-hover: #ef5c51;
+  --ui-coral-soft: #fff0ec;
+  --ui-warning: #d88b28;
+  --ui-warning-soft: #fff6df;
+  --ui-error: #c34f46;
+  --ui-error-soft: #fff0ee;
+  --ui-radius-sm: 9px;
+  --ui-radius: 14px;
+  --ui-radius-lg: 20px;
+  --ui-shadow-float: 0 18px 54px rgba(36, 55, 47, .18), 0 2px 8px rgba(36, 55, 47, .08);
+  --ui-shadow-modal: 0 30px 90px rgba(27, 42, 35, .28), 0 4px 14px rgba(27, 42, 35, .08);
+  --ui-focus: 0 0 0 3px rgba(191, 232, 216, .65);
+  --ui-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* 所有业务弹窗共用同一张“工作台纸张”，仅保留设置抽屉自己的停靠定位。 */
+:where(
+  .materials-dialog,
+  .save-error-dialog,
+  .generation-confirm-dialog,
+  .replacement-dialog,
+  .developer-dialog,
+  .crop-dialog,
+  .license-dialog,
+  .export-dialog,
+  .collab-dialog
+) {
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-lg);
+  color: var(--ui-ink);
+  background:
+    radial-gradient(circle at 8px 8px, rgba(20, 92, 71, .022) 1px, transparent 1.5px) 0 0 / 16px 16px,
+    var(--ui-paper);
+  box-shadow: var(--ui-shadow-modal);
+}
+
+:where(
+  .settings-dialog,
+  .materials-dialog,
+  .save-error-dialog,
+  .generation-confirm-dialog,
+  .replacement-dialog,
+  .developer-dialog,
+  .crop-dialog,
+  .license-dialog,
+  .export-dialog,
+  .collab-dialog
+)::backdrop {
+  background: rgba(24, 34, 30, .34);
+  -webkit-backdrop-filter: blur(5px) saturate(.9);
+  backdrop-filter: blur(5px) saturate(.9);
+}
+
+:where(
+  .materials-dialog-shell,
+  .save-error-dialog-shell,
+  .generation-confirm-shell,
+  .replacement-dialog-shell,
+  .developer-dialog-shell,
+  .crop-dialog-shell,
+  .license-dialog-shell,
+  .export-dialog-shell,
+  .collab-dialog-shell
+) {
+  display: flex;
+  max-height: min(840px, calc(100dvh - 32px));
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.materials-dialog { width: min(590px, calc(100vw - 32px)); }
+.save-error-dialog,
+.generation-confirm-dialog { width: min(570px, calc(100vw - 32px)); }
+.replacement-dialog { width: min(650px, calc(100vw - 32px)); }
+.developer-dialog,
+.license-dialog { width: min(450px, calc(100vw - 32px)); }
+.crop-dialog { width: min(800px, calc(100vw - 32px)); }
+.export-dialog { width: min(590px, calc(100vw - 32px)); }
+.collab-dialog { width: min(560px, calc(100vw - 32px)); }
+
+/* 标题区模拟概念稿左侧 2×2 彩色豆子标识，并确保标题与关闭图标共享光学中心。 */
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 68px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px 13px 48px;
+  border-bottom: 1px solid var(--ui-line);
+  background: rgba(255, 254, 250, .94);
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header)::before {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ui-coral);
+  box-shadow:
+    11px 0 0 #f7c95c,
+    0 11px 0 #72c990,
+    11px 11px 0 #76b9dc;
+  content: '';
+  transform: translateY(-11px);
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) > div {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) small {
+  overflow: hidden;
+  color: var(--ui-muted);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) h2 {
+  margin: 0;
+  color: var(--ui-ink);
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: -.02em;
+  line-height: 1.3;
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) > button {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--ui-paper-strong);
+  color: #66736d;
+  cursor: pointer;
+  line-height: 1;
+  transition: color .16s ease, background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) > button:hover {
+  border-color: rgba(255, 107, 94, .18);
+  background: var(--ui-coral-soft);
+  color: var(--ui-coral-hover);
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) > button:active {
+  transform: scale(.94);
+}
+
+:where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) > button .app-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* 设置面板停靠时空间有限，保留设计稿的轻量标题，不重复绘制豆子标识。 */
+.settings-dialog.is-docked .workspace-dialog-header {
+  min-height: 56px;
+  padding-left: 16px;
+}
+
+.settings-dialog.is-docked .workspace-dialog-header::before { display: none; }
+
+/* 对话框正文统一可滚动但不把页脚推出视口。 */
+:where(
+  .materials-dialog-content,
+  .save-error-dialog-content,
+  .generation-confirm-content,
+  .replacement-dialog-content,
+  .developer-dialog-content,
+  .crop-dialog-content,
+  .license-dialog-content,
+  .export-dialog-content,
+  .collab-dialog-content,
+  .save-dialog-content,
+  .library-dialog-content
+) {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(20, 92, 71, .25) transparent;
+  scrollbar-width: thin;
+}
+
+:where(
+  .materials-dialog-content,
+  .save-error-dialog-content,
+  .generation-confirm-content,
+  .replacement-dialog-content,
+  .developer-dialog-content,
+  .crop-dialog-content,
+  .license-dialog-content,
+  .export-dialog-content,
+  .collab-dialog-content
+)::-webkit-scrollbar { width: 6px; height: 6px; }
+
+:where(
+  .materials-dialog-content,
+  .save-error-dialog-content,
+  .generation-confirm-content,
+  .replacement-dialog-content,
+  .developer-dialog-content,
+  .crop-dialog-content,
+  .license-dialog-content,
+  .export-dialog-content,
+  .collab-dialog-content
+)::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: rgba(20, 92, 71, .2);
+}
+
+/* 页脚操作区统一为“说明 + 稳定按钮组”，窄屏时说明换行但按钮不再难看地错位堆叠。 */
+:where(.workspace-dialog-actions, .export-dialog-actions) {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  min-height: 66px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--ui-line);
+  background: rgba(248, 245, 239, .93);
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) > span {
+  min-width: 0;
+  margin-right: auto;
+  color: var(--ui-muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) > div {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button {
+  display: inline-flex;
+  min-width: 86px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border: 1px solid var(--ui-coral);
+  border-radius: 10px;
+  background: var(--ui-coral);
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(255, 107, 94, .15);
+  transition: transform .16s var(--ui-ease), box-shadow .16s ease, background .16s ease, border-color .16s ease;
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button:hover:not(:disabled) {
+  border-color: var(--ui-coral-hover);
+  background: var(--ui-coral-hover);
+  box-shadow: 0 7px 16px rgba(255, 107, 94, .2);
+  transform: translateY(-1px);
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button:active:not(:disabled) {
+  transform: translateY(0) scale(.98);
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button.secondary {
+  border-color: var(--ui-line-strong);
+  background: #fff;
+  color: var(--ui-green);
+  box-shadow: none;
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button.secondary:hover:not(:disabled) {
+  border-color: rgba(20, 92, 71, .38);
+  background: var(--ui-mint-soft);
+  color: var(--ui-green-hover);
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button.danger-confirm {
+  border-color: var(--ui-error);
+  background: var(--ui-error);
+  color: #fff;
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button:disabled {
+  opacity: .46;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+:where(.workspace-dialog-actions, .export-dialog-actions) button .app-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+/* 输入控件遵循概念稿白色胶囊卡片，键盘焦点使用薄荷绿光环。 */
+:where(
+  .materials-dialog,
+  .save-error-dialog,
+  .generation-confirm-dialog,
+  .replacement-dialog,
+  .developer-dialog,
+  .crop-dialog,
+  .license-dialog,
+  .export-dialog,
+  .collab-dialog,
+  .settings-dialog
+) :where(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
+  min-height: 40px;
+  border: 1px solid var(--ui-line);
+  border-radius: 10px;
+  outline: none;
+  background: #fff;
+  color: var(--ui-ink);
+  font: inherit;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+:where(
+  .materials-dialog,
+  .save-error-dialog,
+  .generation-confirm-dialog,
+  .replacement-dialog,
+  .developer-dialog,
+  .crop-dialog,
+  .license-dialog,
+  .export-dialog,
+  .collab-dialog,
+  .settings-dialog
+) :where(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea):focus {
+  border-color: var(--ui-green);
+  box-shadow: var(--ui-focus);
+}
+
+/* 业务正文内的分组都变成可识别的纸张卡片，减少功能多时的视觉噪声。 */
+:where(
+  .materials-summary,
+  .material-summary,
+  .generation-confirm-summary,
+  .generation-confirm-item,
+  .replacement-preview,
+  .replacement-row,
+  .export-option,
+  .export-format-card,
+  .library-item,
+  .collab-section,
+  .collab-member-item,
+  .collab-apply-list > li,
+  .license-status-card,
+  .wechat-entry-card,
+  .wechat-export-card,
+  .save-error-reason
+) {
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  background: rgba(255, 255, 255, .82);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset;
+}
+
+.save-error-header::before,
+.clear-canvas-header::before {
+  background: var(--ui-error);
+  box-shadow: 11px 0 0 #ed9d55, 0 11px 0 #df7770, 11px 11px 0 #f0c0a0;
+}
+
+.developer-dialog-content img {
+  border: 8px solid #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(27, 64, 48, .12);
+}
+
+.crop-stage,
+.crop-viewport {
+  border-color: rgba(20, 92, 71, .22);
+  background: #202824;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
+}
+
+/* 功能菜单、联机申请和色号选择属于同一浮层家族，层级高于工作台但低于模态窗口。 */
+:where(.stage-toolbar, .collab-popup, .color-popover-panel) {
+  border: 1px solid var(--ui-line);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 7px 7px, rgba(20, 92, 71, .024) 1px, transparent 1.4px) 0 0 / 14px 14px,
+    var(--ui-paper);
+  box-shadow: var(--ui-shadow-float);
+}
+
+.stage-toolbar {
+  overflow: auto;
+  scrollbar-width: none;
+}
+
+.stage-toolbar::-webkit-scrollbar { display: none; }
+
+.stage-toolbar .tool-group button {
+  border-radius: 9px;
+  transition: color .15s ease, background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.collab-popup {
+  overflow: hidden;
+}
+
+.collab-bell-btn .collab-bell-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+}
+
+.collab-popup-head {
+  min-height: 48px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--ui-line);
+  background: rgba(248, 245, 239, .86);
+}
+
+.collab-popup-detail-btn {
+  min-height: 38px;
+  border-radius: 9px;
+  color: var(--ui-green);
+}
+
+.collab-apply-actions button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 8px;
+}
+
+.collab-apply-actions button.primary {
+  border-color: var(--ui-coral);
+  background: var(--ui-coral);
+  color: #fff;
+}
+
+.color-popover-panel {
+  z-index: 2147483200;
+}
+
+.color-popover-search {
+  min-height: 42px;
+  border-color: var(--ui-line);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.color-popover-search:focus-within {
+  border-color: var(--ui-green);
+  box-shadow: var(--ui-focus);
+}
+
+.color-popover-grid > button {
+  min-height: 48px;
+  border-color: var(--ui-line);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .86);
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+
+.color-popover-grid > button:hover {
+  border-color: rgba(20, 92, 71, .34);
+  background: var(--ui-mint-soft);
+  transform: translateY(-1px);
+}
+
+.color-popover-grid > button.selected {
+  border-color: var(--ui-green);
+  background: var(--ui-mint-soft);
+  box-shadow: inset 0 0 0 1px rgba(20, 92, 71, .22);
+}
+
+/* 轻提示使用统一语义图标和色调；popover 进入顶层后不会被任何弹窗遮挡。 */
+.toast {
+  position: fixed;
+  inset: max(14px, env(safe-area-inset-top)) auto auto 50%;
+  z-index: 2147483647;
+  display: flex;
+  width: max-content;
+  max-width: min(440px, calc(100vw - 28px));
+  min-height: 44px;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 8px 13px 8px 9px;
+  border: 1px solid rgba(20, 92, 71, .18);
+  border-radius: 14px;
+  background: rgba(255, 254, 250, .97);
+  color: var(--ui-ink);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.45;
+  text-align: left;
+  box-shadow: var(--ui-shadow-float);
+  transform: translateX(-50%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.toast-symbol {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--ui-mint-soft);
+  color: var(--ui-green);
+}
+
+.toast-symbol .app-icon { width: 16px; height: 16px; }
+.toast.is-success { border-color: rgba(20, 92, 71, .2); }
+.toast.is-success .toast-symbol { background: var(--ui-mint-soft); color: var(--ui-green); }
+.toast.is-warning { border-color: rgba(216, 139, 40, .28); }
+.toast.is-warning .toast-symbol { background: var(--ui-warning-soft); color: var(--ui-warning); }
+.toast.is-error { border-color: rgba(195, 79, 70, .28); }
+.toast.is-error .toast-symbol { background: var(--ui-error-soft); color: var(--ui-error); }
+.toast.is-collab { border-color: rgba(118, 185, 220, .35); }
+.toast.is-collab .toast-symbol { background: #eaf6fb; color: #27769c; }
+.toast.is-info .toast-symbol { background: #f0eee9; color: #607169; }
+.toast:popover-open { animation: component-toast-in .22s var(--ui-ease); }
+
+@keyframes component-toast-in {
+  from { opacity: 0; transform: translate(-50%, -10px) scale(.97); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.error-banner {
+  position: fixed;
+  inset: max(14px, env(safe-area-inset-top)) auto auto 50%;
+  z-index: 2147483647;
+  display: flex;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 28px));
+  min-height: 46px;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 8px 9px 8px 12px;
+  border: 1px solid rgba(195, 79, 70, .3);
+  border-radius: 14px;
+  background: rgba(255, 240, 238, .98);
+  color: #8c352f;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.45;
+  box-shadow: var(--ui-shadow-float);
+  transform: translateX(-50%);
+}
+
+.error-banner > .app-icon { width: 18px; height: 18px; flex: 0 0 18px; }
+
+.error-banner > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.error-banner > button {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(195, 79, 70, .09);
+  color: var(--ui-error);
+  cursor: pointer;
+}
+
+.error-banner > button .app-icon { width: 15px; height: 15px; }
+.error-banner:popover-open { animation: component-toast-in .22s var(--ui-ease); }
+
+/* 所有图标按钮都按 24×24 语义网格居中，避免不同 SVG 的视觉基线漂移。 */
+:where(button, [role='button']) > .app-icon {
+  display: block;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+:where(button, [role='button']):focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus);
+}
+
+@media (max-width: 820px) {
+  /* 移动端弹窗统一为底部抽屉，避开刘海、圆角屏和系统手势区域。 */
+  :where(
+    .materials-dialog,
+    .save-error-dialog,
+    .generation-confirm-dialog,
+    .replacement-dialog,
+    .developer-dialog,
+    .license-dialog,
+    .export-dialog,
+    .collab-dialog
+  ) {
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: calc(90dvh - env(safe-area-inset-top));
+    margin: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .crop-dialog {
+    inset: max(6px, env(safe-area-inset-top)) 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 22px 22px 0 0;
+  }
+
+  :where(
+    .materials-dialog-shell,
+    .save-error-dialog-shell,
+    .generation-confirm-shell,
+    .replacement-dialog-shell,
+    .developer-dialog-shell,
+    .license-dialog-shell,
+    .export-dialog-shell,
+    .collab-dialog-shell
+  ) {
+    max-height: calc(90dvh - env(safe-area-inset-top));
+  }
+
+  .crop-dialog-shell { max-height: calc(100dvh - max(6px, env(safe-area-inset-top))); }
+
+  :where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) {
+    min-height: 62px;
+    padding: 12px 14px 11px 44px;
+  }
+
+  :where(.workspace-dialog-header, .export-dialog-header, .color-popover-header)::before { left: 14px; }
+  :where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) h2 { font-size: 16px; }
+
+  :where(.workspace-dialog-actions, .export-dialog-actions) {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px calc(11px + env(safe-area-inset-bottom));
+  }
+
+  :where(.workspace-dialog-actions, .export-dialog-actions) > span {
+    width: 100%;
+    flex: 1 0 100%;
+    margin: 0;
+  }
+
+  :where(.workspace-dialog-actions, .export-dialog-actions) > div {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  :where(.workspace-dialog-actions, .export-dialog-actions) > div > button {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .color-popover-panel {
+    inset: auto 8px calc(8px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(70dvh, 620px);
+    border-radius: 18px;
+  }
+
+  .color-popover-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .collab-popup {
+    right: max(10px, env(safe-area-inset-right));
+    left: max(10px, env(safe-area-inset-left));
+    width: auto;
+    max-width: none;
+  }
+
+  .toast.is-mobile-bottom {
+    inset: auto auto calc(76px + env(safe-area-inset-bottom)) 50%;
+  }
+}
+
+@media (max-width: 390px) {
+  :where(.workspace-dialog-header, .export-dialog-header, .color-popover-header) small { font-size: 9px; }
+
+  :where(.workspace-dialog-actions, .export-dialog-actions) button {
+    min-height: 39px;
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+
+  .color-popover-grid {
+    grid-template-columns: 1fr;
+    padding-inline: 12px;
+  }
+
+  .color-popover-search { margin-inline: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast:popover-open,
+  .error-banner:popover-open { animation: none; }
+
+  :where(button, .color-popover-grid > button) { transition-duration: .01ms !important; }
+}

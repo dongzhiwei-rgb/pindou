@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  文件：sitemap.xml
+  用途：向搜索引擎声明拼了个豆的公开规范网址。
+  版权：@董志伟-联系方式-makabak1204
+  最后修改：2026-08-24
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://yysls.online/</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

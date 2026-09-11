@@ -1,0 +1,7 @@
+{
+  "description": "开发者联系弹窗运行时配置，修改后刷新页面即可生效。qrCodeUrl 可填写站内路径或完整 HTTPS 地址。",
+  "copyright": "@董志伟-联系方式-makabak1204",
+  "lastModified": "2026-08-21",
+  "weChatId": "makabak1204",
+  "qrCodeUrl": "/developer-wechat-qr.jpg"
+}

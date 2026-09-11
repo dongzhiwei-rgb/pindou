@@ -1,0 +1,61 @@
+# 文件：docker-compose.yml
+# 用途：编排拼豆前端、C# API 与 MySQL 三个容器服务（HTTPS 由容器内 Nginx 终止）。
+# 核心职责：统一端口、网络、依赖关系和安全凭据；提供 Linux 一键部署；管理令牌持久化。
+# 版权：@董志伟-联系方式-makabak1204
+# 最后修改：2026-08-24
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: pindou
+      MYSQL_USER: pindou
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    build:
+      context: ./backend/Pindou.Api
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__MySql: Server=db;Port=3306;Database=pindou;User ID=pindou;Password=${MYSQL_PASSWORD};Pooling=true;
+      # 生产显式启用授权，重启后不再自动回到免授权；凭据均来自 .env（deploy 脚本已校验非默认值）。
+      License__AdminToken: ${LICENSE_ADMIN_TOKEN}
+      License__EnableAuth: ${LICENSE_ENABLE_AUTH:-true}
+      # 生产强制开启「默认密钥拒绝启动」（高-01/严重项）：即使 LICENSE_ADMIN_TOKEN 误设为默认值也会拒启。
+      Security__RejectDefaultSecrets: "true"
+      # 中-06：管理令牌文件写入持久化卷，容器重建后不丢失。
+      Data__AdminTokenFile: /app/data/admin-token.txt
+    expose:
+      - "8080"
+    volumes:
+      - admin-data:/app/data
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  db-data:
+  admin-data:

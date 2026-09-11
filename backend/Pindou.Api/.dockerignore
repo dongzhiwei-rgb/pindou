@@ -1,0 +1,13 @@
+# 文件：backend/Pindou.Api/.dockerignore
+# 用途：排除 C# API Docker 构建不需要的本地文件。
+# 核心职责：避免把 Windows 编译产物、开发日志和编辑器缓存复制到 Linux 镜像构建上下文。
+# 版权：@董志伟-联系方式-makabak1204
+# 最后修改：2026-08-21
+
+bin
+obj
+*.user
+*.log
+.vs
+.vscode
+

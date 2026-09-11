@@ -1,0 +1,37 @@
+# 文件：.gitignore
+# 用途：排除构建产物、本地开发配置与运行时敏感文件。
+# 核心职责：防止依赖、日志、管理员令牌和本地密钥被提交到版本库。
+# 版权：@董志伟-联系方式-makabak1204
+# 最后修改：2026-09-11
+
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+.logs/
+.idea/
+.vs/
+.vscode/
+*.user
+*.suo
+*.log
+*.tsbuildinfo
+.env
+**/admin-token.txt
+.DS_Store
+*.bak
+npm-debug.log*
+yarn-error.log*
+
+# 发布包产物与本地验证痕迹不入库
+release/
+.workbuddy/
+.qa-edge-profile/
+scripts/
+design-review/
+rollback/
+assets/
+taobao/
+*.m4a
+*.verify_write_probe.tmp
+**/.write-test.txt

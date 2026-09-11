@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<!--
+  文件：admin.html
+  用途：提供拼了个豆授权与运行开关的后台管理页面。
+  核心职责：仅供管理员操作，不参与公开搜索索引。
+  版权：@董志伟-联系方式-makabak1204
+  最后修改：2026-08-24
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>拼了个豆 · 后台管理</title>
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --text: #1f2430;
+    --muted: #8a90a0;
+    --border: #e4e7ef;
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --danger: #ef4444;
+    --success: #16a34a;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* 点击元素时不出现蓝色选中高亮；输入框等需选中的位置放行 */
+  * { -webkit-tap-highlight-color: transparent; }
+  body { user-select: none; -webkit-user-select: none; }
+  input, textarea, [contenteditable="true"] { user-select: text; -webkit-user-select: text; }
+  :focus:not(:focus-visible) { outline: none; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text); font-size: 14px;
+  }
+  header {
+    background: #1f2430; color: #fff; padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .sub { color: #9aa3b5; font-size: 12px; margin-left: 10px; }
+  .token-box { display: flex; align-items: center; gap: 8px; }
+  .token-box input { width: 260px; }
+  .wrap { max-width: 1020px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .card h2 { font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+  .badge.on { background: #dcfce7; color: var(--success); }
+  .badge.off { background: #fee2e2; color: var(--danger); }
+  input, button, select { font: inherit; }
+  input[type="text"], input[type="password"], input[type="number"] {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; background: #fff;
+  }
+  input:focus { border-color: var(--primary); }
+  button {
+    padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;
+    background: var(--primary); color: #fff; transition: background .15s;
+  }
+  button:hover { background: var(--primary-dark); }
+  button.secondary { background: #eef1f6; color: var(--text); }
+  button.secondary:hover { background: #e2e6ef; }
+  button.danger { background: #fdecec; color: var(--danger); }
+  button.danger:hover { background: #fbd5d5; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+  .switch-row:last-child { border-bottom: none; }
+  .switch-label { display: flex; flex-direction: column; gap: 2px; }
+  .switch-label .desc { color: var(--muted); font-size: 12px; }
+  /* toggle 开关 */
+  .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle input { display: none; }
+  .toggle .slider {
+    position: absolute; inset: 0; background: #d3d8e2; border-radius: 24px; cursor: pointer; transition: background .2s;
+  }
+  .toggle .slider::before {
+    content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .toggle input:checked + .slider { background: var(--success); }
+  .toggle input:checked + .slider::before { transform: translateX(20px); }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { color: var(--muted); font-size: 12px; }
+  .field input { width: 120px; }
+  .gen-area { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 13px; overflow: hidden; }
+  th { color: var(--muted); font-weight: 500; background: #fafbfd; white-space: nowrap; }
+  td.mono { font-family: Consolas, monospace; font-size: 12px; word-break: break-all; }
+  td.chk, th.chk { width: 34px; text-align: center; }
+  th:nth-child(2), td:nth-child(2) { width: 24%; }
+  th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; white-space: nowrap; }
+  th:nth-child(4), td:nth-child(4) { width: 14%; }
+  th:nth-child(5), td:nth-child(5) { width: 7%; }
+  th:nth-child(6), td:nth-child(6) { width: 16%; }
+  /* 操作列：固定像素宽度，横向滚动时冻结在右侧 */
+  th:nth-child(7), td:nth-child(7) { width: 100px; min-width: 100px; padding-left: 4px; padding-right: 4px; position: sticky; right: 0; background: #fff; z-index: 1; white-space: nowrap; }
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+  .pager { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .pager-info { color: var(--muted); font-size: 13px; margin-right: auto; }
+  .pager button { padding: 5px 12px; font-size: 12px; }
+  .pager select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: #fff; outline: none; }
+  .row-btn {
+    padding: 3px 10px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer;
+  }
+  .key-cell { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+  .key-copy-btn {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 20px; height: 20px; padding: 0; border: none; border-radius: 5px;
+    background: transparent; color: var(--muted); cursor: pointer;
+  }
+  .key-copy-btn:hover { background: #eef1f6; color: var(--primary); }
+  .delete-btn { background: #fee2e2; color: #b91c1c; }
+  .delete-btn:hover { background: #fecaca; }
+  .revoked-badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; background: #fee2e2; color: #b91c1c; margin-left: 6px; vertical-align: middle; }
+  .key-link { cursor: pointer; color: var(--primary); }
+  .key-link:hover { text-decoration: underline; }
+  .detail-content { padding: 14px 18px; max-height: 60vh; overflow-y: auto; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  .detail-grid dt { color: var(--muted); font-size: 12px; margin-bottom: 2px; }
+  .detail-grid dd { margin: 0; font-size: 13px; word-break: break-all; }
+  .detail-grid dd.mono { font-family: Consolas, monospace; font-size: 12px; }
+  .online-dot { color: var(--success); font-size: 12px; margin-right: 4px; }
+  .st-badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; }
+  .st-online { background: #dcfce7; color: #15803d; }
+  .st-offline { background: #f1f5f9; color: #64748b; }
+  .st-revoked { background: #fee2e2; color: #b91c1c; }
+  .st-unused { background: #e0e7ff; color: #4338ca; }
+  .st-badge.st-clickable { cursor: pointer; }
+  .st-badge.st-clickable:hover { outline: 1px solid var(--border); }
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 6px 10px; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); }
+  .filter-bar b { color: var(--text); }
+  .th-filter-btn { background: transparent; border: none; padding: 0 2px; cursor: pointer; color: var(--muted); vertical-align: -2px; }
+  .th-filter-btn:hover { color: var(--primary); }
+  .filter-ico { width: 12px; height: 12px; }
+  .filter-menu { position: fixed; z-index: 999; min-width: 120px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 4px; }
+  .filter-menu-item { padding: 6px 12px; font-size: 12px; color: var(--text); cursor: pointer; border-radius: 6px; }
+  .filter-menu-item:hover { background: #f1f5f9; }
+  .filter-menu-item.active { color: var(--primary); font-weight: 600; }
+
+
+  .toast {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+    background: #1f2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px;
+    opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 99; max-width: 80vw;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { background: var(--danger); }
+dialog.revoke-dialog { border: none; border-radius: var(--radius); padding: 0; width: 480px; max-width: 92vw; margin: auto; box-shadow: 0 12px 40px rgba(0,0,0,.18); }
+dialog.revoke-dialog::backdrop { background: rgba(15, 23, 42, .45); }
+.revoke-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: #fafbfd; border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; }
+.revoke-head h3 { font-size: 15px; }
+.revoke-close { background: transparent; border: none; font-size: 20px; color: var(--muted); cursor: pointer; padding: 0 4px; }
+.revoke-tip { padding: 16px 18px 8px; }
+.revoke-keys { margin: 8px 18px 16px; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-family: Consolas, monospace; font-size: 12px; word-break: break-all; }
+.revoke-keys .k { padding: 3px 0; border-bottom: 1px dashed var(--border); }
+.revoke-keys .k:last-child { border-bottom: none; }
+.revoke-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border); }
+.loading-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; }
+.loading-overlay .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: pd-spin .8s linear infinite; }
+@keyframes pd-spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- 刷新时的加载遮罩：会话检查完成前遮挡页面，避免登录区闪烁。 -->
+<div id="loadingOverlay" class="loading-overlay"><span class="spinner"></span><span>加载中…</span></div>
+
+<header>
+  <div>
+    <h1>拼了个豆 · 后台管理</h1>
+    <span class="sub">密钥 / 授权开关管理</span>
+  </div>
+  <div class="token-box">
+    <input id="tokenInput" type="password" placeholder="输入管理密钥" autocomplete="off">
+    <button id="saveTokenBtn" class="secondary">登录</button>
+    <button id="logoutBtn" class="danger" style="display:none;">退出</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 授权开关 -->
+  <div class="card">
+    <h2>授权开关 <span id="swState" class="badge off">未知</span></h2>
+    <div class="switch-row">
+      <div class="switch-label">
+        <span>启用授权</span>
+        <span class="desc">开启：有密钥按密钥校验、无密钥按 IP 试用；关闭：所有人免授权可用全部功能</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="swAuth"><span class="slider"></span></label>
+    </div>
+    <div class="row" style="margin-top:16px; justify-content:flex-end;">
+      <button id="reloadSwBtn" class="secondary">刷新状态</button>
+      <button id="saveSwBtn">保存开关</button>
+    </div>
+  </div>
+
+  <!-- 批量生成密钥 -->
+  <div class="card">
+    <h2>批量生成密钥</h2>
+    <div class="gen-area">
+      <div class="field">
+        <label>使用期限（天）</label>
+        <input id="genDays" type="number" min="0" value="0">
+      </div>
+      <div class="field">
+        <label>使用期限（小时）</label>
+        <input id="genHours" type="number" min="0" value="24">
+      </div>
+      <div class="field">
+        <label>每个密钥生成次数</label>
+        <input id="genCount" type="number" min="1" value="5">
+      </div>
+      <div class="field">
+        <label>生成数量（把）</label>
+        <input id="genNumber" type="number" min="1" max="100" value="1">
+      </div>
+      <button id="genBtn">生成</button>
+    </div>
+  </div>
+
+  <!-- 密钥列表 -->
+  <div class="card">
+    <h2>密钥列表
+      <button id="reloadListBtn" class="secondary" style="padding:4px 12px; font-size:12px;">刷新</button>
+      <button id="batchCopyBtn" class="secondary" style="display:none; margin-left:auto; padding:4px 12px; font-size:12px;" onclick="window.__batchCopy()">批量复制</button>
+      <button id="batchExportBtn" class="secondary" style="display:none; padding:4px 12px; font-size:12px;" onclick="window.__batchExport()">批量导出</button>
+      <button id="batchRevokeBtn" class="danger" style="display:none; padding:4px 12px; font-size:12px;" onclick="window.__batchRevoke()">批量停用</button>
+      <button id="batchDeleteBtn" class="danger delete-btn" style="display:none; padding:4px 12px; font-size:12px;" onclick="window.__batchDelete()">批量删除</button>
+    </h2>
+    <div id="filterBar" class="filter-bar" style="display:none;">
+      <span>当前筛选：<b id="filterLabel"></b></span>
+      <button type="button" class="secondary" onclick="window.__pickFilter('')">清除</button>
+    </div>
+    <div id="filterMenu" class="filter-menu" style="display:none;">
+      <div class="filter-menu-item" data-s="" onclick="window.__pickFilter('')">全部</div>
+      <div class="filter-menu-item" data-s="unused" onclick="window.__pickFilter('unused')">未使用</div>
+      <div class="filter-menu-item" data-s="online" onclick="window.__pickFilter('online')">在线中</div>
+      <div class="filter-menu-item" data-s="offline" onclick="window.__pickFilter('offline')">已离线</div>
+      <div class="filter-menu-item" data-s="revoked" onclick="window.__pickFilter('revoked')">已停用</div>
+    </div>
+    <div id="listWrap"><div class="empty">加载中…</div></div>
+    <div id="pager" class="pager"></div>
+  </div>
+
+</div>
+
+<dialog id="revokeDialog" class="revoke-dialog">
+  <div class="revoke-head">
+    <h3 id="dialogTitle">确认停用</h3>
+    <button type="button" class="revoke-close" onclick="window.__closeRevokeDialog()">×</button>
+  </div>
+  <p class="revoke-tip"><span id="dialogTip">将停用</span> <strong id="revokeCount">0</strong> 把密钥：</p>
+  <div id="revokeKeys" class="revoke-keys"></div>
+  <div class="revoke-actions">
+    <button type="button" class="secondary" onclick="window.__closeRevokeDialog()">取消</button>
+    <button type="button" id="confirmRevokeBtn" class="danger" onclick="window.__confirmAction()">确认停用</button>
+  </div>
+</dialog>
+
+<dialog id="detailDialog" class="revoke-dialog">
+  <div class="revoke-head">
+    <h3>密钥使用情况</h3>
+    <button type="button" class="revoke-close" onclick="window.__closeDetailDialog()">×</button>
+  </div>
+  <div id="detailContent" class="detail-content"></div>
+  <div class="revoke-actions">
+    <button type="button" class="secondary" onclick="window.__closeDetailDialog()">关闭</button>
+    <button type="button" id="exportDetailBtn" onclick="window.__exportDetail()">导出数据</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var authed = false; // 当前是否已建立管理会话（HttpOnly Cookie）
+  var apiBase = "/api"; // 同源部署；跨域时改为后端地址
+  // 接口签名已移除（高-01 阶段3）：认证由 HttpOnly 会话 Cookie 与各接口业务鉴权承担。
+  async function signedFetch(url, init) {
+    init = init || {};
+    return fetch(apiBase + url, init);
+  }
+  async function signedEventSource(url) {
+    return new EventSource(apiBase + url);
+  }
+  var state = { page: 1, pageSize: 20, total: 0, selected: {}, status: "" };
+  var keyFailCount = 0; // 密钥状态推送连续失败次数（无效管理密钥 401 时用于停止无限重连）
+  var COPY_ICON = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect><path d="M10.5 5.5V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"></path></svg>';
+
+  function token() { return document.getElementById("tokenInput").value.trim(); }
+
+  function showLoginPrompt() {
+    toast("请输入管理密钥登录", true);
+    var input = document.getElementById("tokenInput");
+    if (input) input.focus();
+  }
+
+  // 检查当前 HttpOnly Cookie 会话是否有效（后端恒返回 200，按 authenticated 字段判断）。
+  async function checkAdminSession() {
+    try {
+      var resp = await signedFetch("/admin/session");
+      if (resp.status !== 200) return false;
+      var data = await resp.json().catch(function () { return {}; });
+      return data.authenticated === true;
+    } catch (e) { return false; }
+  }
+
+  // 用管理密钥登录：服务端校验后签发 HttpOnly 会话 Cookie，不再存入 localStorage。
+  async function loginAdmin() {
+    var t = token();
+    if (!t) return toast("请输入管理密钥", true);
+    try {
+      var resp = await signedFetch("/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: t })
+      });
+      if (resp.status === 200) {
+        authed = true;
+        document.getElementById("tokenInput").value = "";
+        document.getElementById("saveTokenBtn").style.display = "none";
+        document.getElementById("logoutBtn").style.display = "";
+        document.getElementById("tokenInput").style.display = "none";
+        toast("登录成功");
+        loadSwitches(); loadKeys();
+        void connectKeySse();
+      } else {
+        toast("登录失败：管理密钥不正确", true);
+      }
+    } catch (e) {
+      toast(e.message || "登录失败，请重试", true);
+    }
+  }
+
+  // 退出：撤销服务端会话并清除 HttpOnly Cookie，回到登录态。
+  async function logoutAdmin() {
+    try {
+      await signedFetch("/admin/logout", { method: "POST" });
+    } catch (e) { /* 忽略 */ }
+    authed = false;
+    // 关闭密钥状态 SSE，避免登出后持续 401 刷新。
+    if (keyEs) { keyEs.close(); keyEs = null; }
+    keyFailCount = 0;
+    document.getElementById("saveTokenBtn").style.display = "";
+    document.getElementById("logoutBtn").style.display = "none";
+    document.getElementById("tokenInput").style.display = "";
+    // 退出后清空密钥列表残留数据，避免敏感信息停留在界面。
+    var tbody = document.querySelector("#listWrap tbody");
+    if (tbody) tbody.innerHTML = "";
+    toast("已退出，请重新登录管理");
+    var input = document.getElementById("tokenInput");
+    if (input) input.focus();
+  }
+
+  function toast(msg, isError) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.className = "toast show" + (isError ? " error" : "");
+    clearTimeout(el._timer);
+    el._timer = setTimeout(function () { el.className = "toast"; }, 2600);
+  }
+
+  async function req(method, path, body) {
+    // 管理鉴权由 HttpOnly Cookie 承载，无需再手动携带 X-Admin-Token。
+    var headers = {};
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    var resp = await signedFetch(path, {
+      method: method,
+      headers: headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined
+    });
+    if (resp.status === 401) {
+      authed = false;
+      showLoginPrompt();
+      throw new Error("登录已失效，请重新输入管理密钥");
+    }
+    if (!resp.ok) {
+      var data = await resp.json().catch(function () { return {}; });
+      throw new Error((data.message || ("请求失败 " + resp.status)));
+    }
+    return resp.status === 200 ? resp.json().catch(function () { return null; }) : null;
+  }
+
+  // HTML 转义：innerHTML 拼接用户可控字段（如来源 IP）前必须转义，防止存储型 XSS。
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"'`]/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "`": "&#96;" }[ch];
+    });
+  }
+  function formatSeconds(s) {
+    if (s == null) return "-";
+    if (s <= 0) return "0";
+    var d = Math.floor(s / 86400);
+    var h = Math.floor((s % 86400) / 3600);
+    var m = Math.round((s % 3600) / 60);
+    var parts = [];
+    if (d > 0) parts.push(d + "天");
+    if (h > 0) parts.push(h + "小时");
+    if (m > 0) parts.push(m + "分钟");
+    return parts.length > 0 ? parts.join("") : "0分钟";
+  }
+  function formatTime(iso) {
+    if (!iso) return "-";
+    var d = new Date(iso);
+    return isNaN(d) ? iso : d.toLocaleString("zh-CN", { hour12: false });
+  }
+
+  // ---------- 授权开关 ----------
+  function renderSwState(sw) {
+    var badge = document.getElementById("swState");
+    var on = !!(sw && sw.enableAuth);
+    badge.textContent = on ? "已启用" : "已关闭";
+    badge.className = "badge " + (on ? "on" : "off");
+    document.getElementById("swAuth").checked = on;
+  }
+
+  async function loadSwitches(showToast) {
+    try {
+      renderSwState(await req("GET", "/admin/switches"));
+      if (showToast) toast("刷新成功");
+    } catch (e) {
+      renderSwState(null);
+      toast(e.message, true);
+    }
+  }
+
+  async function saveSwitches() {
+    var btn = document.getElementById("saveSwBtn");
+    btn.disabled = true;
+    try {
+      var sw = await req("PUT", "/admin/switches", { enableAuth: document.getElementById("swAuth").checked });
+      renderSwState(sw);
+      toast("开关已保存并推送至所有在线前端");
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- 批量生成密钥 ----------
+  // 小时框满 24 自动向天数进一位（24 小时 = 1 天）。
+  function onHoursInput() {
+    var hoursEl = document.getElementById("genHours");
+    var daysEl = document.getElementById("genDays");
+    var h = parseInt(hoursEl.value, 10) || 0;
+    var d = parseInt(daysEl.value, 10) || 0;
+    if (h >= 24) {
+      var carry = Math.floor(h / 24);
+      daysEl.value = d + carry;
+      hoursEl.value = h % 24;
+    }
+  }
+
+  async function generateKeys() {
+    var days = parseInt(document.getElementById("genDays").value, 10) || 0;
+    var hours = parseInt(document.getElementById("genHours").value, 10) || 0;
+    var count = parseInt(document.getElementById("genCount").value, 10);
+    var number = parseInt(document.getElementById("genNumber").value, 10);
+    if (days < 0) return toast("天数不能为负数", true);
+    if (hours < 0) return toast("小时不能为负数", true);
+    // 天/小时均为 0 时生成仅限次数的密钥（无画板编辑权限），次数不能为 0。
+    if (!count || count < 1) return toast("每个密钥次数必须 ≥ 1", true);
+    if (!number || number < 1 || number > 100) return toast("生成数量必须为 1–100", true);
+    var totalHours = days * 24 + hours;
+    var btn = document.getElementById("genBtn");
+    btn.disabled = true;
+    try {
+      var data = await req("POST", "/admin/licenses", { totalHours: totalHours, count: count, number: number });
+      var keys = (data && data.keys) || [];
+      toast("已生成 " + keys.length + " 把密钥");
+      loadKeys();
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- 密钥列表（分页 + 多选） ----------
+  function setRefreshLoading(loading) {
+    var btn = document.getElementById("reloadListBtn");
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.textContent = loading ? "刷新中…" : "刷新";
+  }
+
+  function updateBatchBtn() {
+    var n = Object.keys(state.selected).length;
+    var show = n > 0;
+    ["batchCopyBtn", "batchExportBtn", "batchRevokeBtn", "batchDeleteBtn"].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.style.display = show ? "" : "none";
+    });
+    var revoke = document.getElementById("batchRevokeBtn");
+    if (revoke) revoke.textContent = "批量停用（" + n + "）";
+    var del = document.getElementById("batchDeleteBtn");
+    if (del) del.textContent = "批量删除（" + n + "）";
+  }
+
+  window.__toggleSelect = function (cb) {
+    if (cb.checked) state.selected[cb.dataset.key] = true;
+    else delete state.selected[cb.dataset.key];
+    updateBatchBtn();
+  };
+
+  window.__toggleAll = function (cb) {
+    state.selected = {};
+    var checks = document.querySelectorAll(".row-check");
+    checks.forEach(function (c) { c.checked = cb.checked; if (cb.checked) state.selected[c.dataset.key] = true; });
+    updateBatchBtn();
+  };
+
+  async function loadKeys(showToast) {
+    var wrap = document.getElementById("listWrap");
+    try {
+      var url = "/admin/licenses?page=" + state.page + "&pageSize=" + state.pageSize;
+      if (state.status) url += "&status=" + encodeURIComponent(state.status);
+      var data = await req("GET", url);
+      var items = data.items || [];
+      state.total = data.total || 0;
+      if (items.length === 0) {
+        state.selected = {};
+        if (state.total > 0 && state.page > 1) {
+          // 当前页越界（批量删除后），回退到最后一页。
+          state.page = Math.max(1, Math.ceil(state.total / state.pageSize));
+          loadKeys(showToast);
+          return;
+        }
+        wrap.innerHTML = '<div class="empty">暂无密钥</div>';
+        renderPager();
+        updateBatchBtn();
+        renderFilterBar();
+        if (showToast) toast("刷新成功");
+        return;
+      }
+      var rows = items.map(function (item) {
+        var remaining = item.remainingSeconds;
+        var checked = state.selected[item.key] ? "checked" : "";
+        var revoked = !!item.isRevoked;
+        var keyEsc = item.key.replace(/'/g, "");
+        var actions = revoked
+          ? '<button class="delete-btn row-btn" onclick="window.__deleteKey(\'' + keyEsc + '\')">删除</button>'
+          : '<button class="danger row-btn" onclick="window.__revoke(\'' + keyEsc + '\')">停用</button> <button class="delete-btn row-btn" onclick="window.__deleteKey(\'' + keyEsc + '\')">删除</button>';
+        return '<tr>' +
+          '<td class="chk"><input type="checkbox" class="row-check" data-key="' + keyEsc + '" ' + checked + ' onchange="window.__toggleSelect(this)"></td>' +
+          '<td class="mono"><span class="key-cell"><a class="key-link" onclick="window.__showDetail(\'' + keyEsc + '\')">' + escapeHtml(item.key) + '</a><button type="button" class="key-copy-btn" title="复制密钥" onclick="window.__copyKey(\'' + keyEsc + '\')">' + COPY_ICON + '</button></span></td>' +
+          '<td>' + statusBadge(item.status) + '</td>' +
+          '<td>' + (item.totalSeconds > 0 ? formatSeconds(remaining) + ' / ' + formatSeconds(item.totalSeconds) : '已到期') + '</td>' +
+          '<td>' + item.remainingCount + '</td>' +
+          '<td>' + (item.totalSeconds > 0 ? formatTime(new Date(Date.now() + item.remainingSeconds * 1000)) : '已到期') + '</td>' +
+          '<td>' + actions + '</td>' +
+          '</tr>';
+      }).join("");
+      wrap.innerHTML =
+        '<table><thead><tr><th class="chk"><input type="checkbox" id="checkAll" onchange="window.__toggleAll(this)"></th><th>密钥</th><th>状态 <button type="button" class="th-filter-btn" title="筛选" onclick="window.__openFilterMenu(event)"><svg class="filter-ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1 2h14l-5 6v5l-4 1V8z"/></svg></button></th><th>剩余 / 总时长</th><th>剩余次数</th><th>到期时间</th><th>操作</th></tr></thead><tbody>'
+        + rows + '</tbody></table>';
+      renderPager();
+      updateBatchBtn();
+      renderFilterBar();
+      if (showToast) toast("刷新成功");
+    } catch (e) {
+      wrap.innerHTML = '<div class="empty">' + e.message + '</div>';
+      if (showToast) toast(e.message, true);
+    } finally {
+      setRefreshLoading(false);
+    }
+  }
+
+  function renderPager() {
+    var pager = document.getElementById("pager");
+    var totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+    pager.innerHTML =
+      '<span class="pager-info">共 ' + state.total + ' 条 · 第 ' + state.page + ' / ' + totalPages + ' 页</span>' +
+      '<button class="secondary" onclick="window.__gotoPage(' + (state.page - 1) + ')" ' + (state.page <= 1 ? 'disabled' : '') + '>上一页</button>' +
+      '<button class="secondary" onclick="window.__gotoPage(' + (state.page + 1) + ')" ' + (state.page >= totalPages ? 'disabled' : '') + '>下一页</button>' +
+      '<select onchange="window.__setPageSize(this.value)">' +
+        '<option value="20"' + (state.pageSize === 20 ? " selected" : "") + '>20 条/页</option>' +
+        '<option value="50"' + (state.pageSize === 50 ? " selected" : "") + '>50 条/页</option>' +
+        '<option value="100"' + (state.pageSize === 100 ? " selected" : "") + '>100 条/页</option>' +
+      '</select>';
+  }
+
+  window.__gotoPage = function (page) {
+    var totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+    if (page < 1 || page > totalPages) return;
+    state.page = page;
+    state.selected = {};
+    loadKeys();
+  };
+
+  window.__setPageSize = function (size) {
+    state.pageSize = parseInt(size, 10);
+    state.page = 1;
+    state.selected = {};
+    loadKeys();
+  };
+
+  window.__revoke = function (key) {
+    openActionDialog([key], "revoke");
+  };
+
+  window.__deleteKey = function (key) {
+    openActionDialog([key], "delete");
+  };
+
+  window.__batchRevoke = function () {
+    var keys = Object.keys(state.selected);
+    if (keys.length === 0) return;
+    openActionDialog(keys, "revoke");
+  };
+
+  window.__batchDelete = function () {
+    var keys = Object.keys(state.selected);
+    if (keys.length === 0) return;
+    openActionDialog(keys, "delete");
+  };
+
+  // ---------- 复制与导出 ----------
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); resolve(); }
+      catch (e) { reject(e); }
+      finally { document.body.removeChild(ta); }
+    });
+  }
+
+  window.__copyKey = async function (key) {
+    try {
+      await copyText(key);
+      toast("已复制密钥");
+    } catch (e) {
+      toast("复制失败，请手动复制", true);
+    }
+  };
+
+  window.__batchCopy = async function () {
+    var keys = Object.keys(state.selected);
+    if (keys.length === 0) return;
+    try {
+      await copyText(keys.join("\n"));
+      toast("已复制 " + keys.length + " 把密钥到剪贴板");
+    } catch (e) {
+      toast("复制失败，请手动复制", true);
+    }
+  };
+
+  window.__batchExport = function () {
+    var keys = Object.keys(state.selected);
+    if (keys.length === 0) return;
+    var blob = new Blob([keys.join("\r\n") + "\r\n"], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "pindou-keys-" + Date.now() + ".txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("已导出 " + keys.length + " 把密钥");
+  };
+
+  // ---------- 停用/删除确认弹窗（点击确认后才调用接口） ----------
+  var pendingAction = null;
+  var pendingKeys = [];
+  function openActionDialog(keys, action) {
+    pendingKeys = keys.slice();
+    pendingAction = action === "delete" ? "delete" : "revoke";
+    var isDelete = pendingAction === "delete";
+    document.getElementById("dialogTitle").textContent = isDelete ? "确认删除" : "确认停用";
+    document.getElementById("dialogTip").textContent = isDelete ? "将删除" : "将停用";
+    document.getElementById("revokeCount").textContent = keys.length;
+    document.getElementById("revokeKeys").innerHTML = keys.map(function (k) {
+      return '<div class="k">' + k + '</div>';
+    }).join("");
+    document.getElementById("confirmRevokeBtn").textContent = isDelete ? "确认删除" : "确认停用";
+    var dialog = document.getElementById("revokeDialog");
+    if (!dialog.open) dialog.showModal();
+  }
+
+  window.__closeRevokeDialog = function () {
+    pendingAction = null;
+    pendingKeys = [];
+    var dialog = document.getElementById("revokeDialog");
+    if (dialog.open) dialog.close();
+  };
+
+  window.__confirmAction = async function () {
+    var keys = pendingKeys;
+    if (!keys || keys.length === 0) return;
+    var isDelete = pendingAction === "delete";
+    var btn = document.getElementById("confirmRevokeBtn");
+    btn.disabled = true;
+    try {
+      var data = await req("POST", isDelete ? "/admin/licenses/delete" : "/admin/licenses/revoke", { keys: keys });
+      window.__closeRevokeDialog();
+      var n = data && (isDelete ? data.deleted : data.revoked);
+      toast((isDelete ? "已删除 " : "已停用 ") + (n || keys.length) + " 把密钥");
+      state.selected = {};
+      loadKeys();
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  // ---------- 状态徽标与筛选 ----------
+  function statusBadge(s) {
+    var label = s === "online" ? "在线中" : s === "offline" ? "已离线" : s === "revoked" ? "已停用" : "未使用";
+    var cls = s === "online" ? "st-online" : s === "offline" ? "st-offline" : s === "revoked" ? "st-revoked" : "st-unused";
+    return '<span class="st-badge ' + cls + '">' + label + '</span>';
+  }
+
+  // 表头筛选图标：点击弹出筛选菜单。
+  window.__openFilterMenu = function (e) {
+    e.stopPropagation();
+    var menu = document.getElementById("filterMenu");
+    var items = menu.querySelectorAll(".filter-menu-item");
+    items.forEach(function (it) {
+      it.classList.toggle("active", it.getAttribute("data-s") === state.status);
+    });
+    var rect = e.currentTarget.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 4) + "px";
+    menu.style.left = rect.left + "px";
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  };
+
+  window.__pickFilter = function (s) {
+    state.status = s;
+    state.page = 1;
+    state.selected = {};
+    loadKeys();
+    document.getElementById("filterMenu").style.display = "none";
+  };
+
+  document.addEventListener("click", function (e) {
+    var menu = document.getElementById("filterMenu");
+    if (menu && !menu.contains(e.target) && !(e.target instanceof Element && e.target.closest(".th-filter-btn"))) {
+      menu.style.display = "none";
+    }
+  });
+
+  function renderFilterBar() {
+    var bar = document.getElementById("filterBar");
+    if (!bar) return;
+    if (state.status) {
+      var map = { online: "在线中", offline: "已离线", revoked: "已停用", unused: "未使用" };
+      document.getElementById("filterLabel").textContent = map[state.status] || state.status;
+      bar.style.display = "";
+    } else {
+      bar.style.display = "none";
+    }
+  }
+
+  window.__setStatus = function (value) {
+    state.status = value;
+    state.page = 1;
+    state.selected = {};
+    loadKeys();
+  };
+
+  // ---------- 密钥使用情况弹窗 ----------
+  var detailData = null;
+  window.__closeDetailDialog = function () {
+    detailData = null;
+    var dialog = document.getElementById("detailDialog");
+    if (dialog && dialog.open) dialog.close();
+  };
+
+  window.__showDetail = async function (key) {
+    try {
+      var d = await req("GET", "/admin/licenses/" + encodeURIComponent(key) + "/detail");
+      detailData = d;
+      var remaining = d.remainingSeconds;
+      var statusText = d.isRevoked ? "已停用" : (d.totalSeconds > 0 && remaining <= 0 ? "已到期" : "正常");
+      document.getElementById("detailContent").innerHTML =
+        '<div class="detail-grid">' +
+        '<div><dt>密钥</dt><dd class="mono">' + escapeHtml(d.key) + '</dd></div>' +
+        '<div><dt>状态</dt><dd>' + statusText + '</dd></div>' +
+        '<div><dt>剩余 / 总时长</dt><dd>' + (d.totalSeconds > 0 ? formatSeconds(Math.max(0, remaining)) + " / " + formatSeconds(d.totalSeconds) : "已到期") + '</dd></div>' +
+        '<div><dt>剩余次数</dt><dd>' + d.remainingCount + '</dd></div>' +
+        '<div><dt>创建时间</dt><dd>' + formatTime(d.createdAt) + '</dd></div>' +
+        '<div><dt>到期时间</dt><dd>' + (d.totalSeconds > 0 ? formatTime(new Date(Date.now() + d.remainingSeconds * 1000)) : "已到期") + '</dd></div>' +
+        '<div><dt>上次登录 IP</dt><dd>' + (d.lastIp ? escapeHtml(d.lastIp) : "-") + '</dd></div>' +
+        '<div><dt>最近活跃时间</dt><dd>' + (d.lastSeenAt ? formatTime(d.lastSeenAt) : "-") + '</dd></div>' +
+        '<div><dt>在线状态</dt><dd>' + (d.online ? '<span class="online-dot">●</span> 在线' : "离线") + '</dd></div>' +
+        '</div>';
+      var dialog = document.getElementById("detailDialog");
+      if (!dialog.open) dialog.showModal();
+    } catch (e) {
+      toast(e.message, true);
+    }
+  };
+
+  window.__exportDetail = function () {
+    var d = detailData;
+    if (!d) return;
+    var text = JSON.stringify(d, null, 2);
+    var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "pindou-key-" + d.key + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("已导出密钥数据");
+  };
+
+  // ---------- 事件绑定 ----------
+  document.getElementById("saveTokenBtn").addEventListener("click", function () {
+    void loginAdmin();
+  });
+  document.getElementById("logoutBtn").addEventListener("click", function () {
+    void logoutAdmin();
+  });
+
+  document.getElementById("saveSwBtn").addEventListener("click", saveSwitches);
+  document.getElementById("reloadSwBtn").addEventListener("click", function () {
+    loadSwitches(true);
+  });
+  document.getElementById("reloadListBtn").addEventListener("click", function () {
+    setRefreshLoading(true);
+    loadKeys(true);
+  });
+  document.getElementById("genBtn").addEventListener("click", generateKeys);
+  document.getElementById("genHours").addEventListener("input", onHoursInput);
+  document.getElementById("tokenInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("saveTokenBtn").click();
+  });
+
+  // ---------- SSE 实时刷新开关 ----------
+  async function connectSse() {
+    try {
+      var es = await signedEventSource("/license/switches/events");
+      es.addEventListener("switch-changed", function () { loadSwitches(); });
+      es.onerror = function () { es.close(); setTimeout(connectSse, 3000); };
+    } catch (e) { /* 忽略 */ }
+  }
+
+  // ---------- SSE 实时刷新密钥状态 ----------
+  var keyEs = null;
+  // 申请后台密钥状态 SSE 一次性票据（需已登录的管理会话）。
+  async function requestStatesTicket() {
+    var resp = await signedFetch("/license/tickets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ purpose: "states" })
+    });
+    if (resp.status !== 200) throw new Error("票据申请失败");
+    var data = await resp.json();
+    return data.ticket;
+  }
+  async function connectKeySse() {
+    if (keyEs) { keyEs.close(); keyEs = null; }
+    if (!authed) return;
+    try {
+      // 先申请一次性票据，管理凭据不再出现在 URL。
+      var ticket = await requestStatesTicket();
+      keyEs = await signedEventSource("/license/states/events?ticket=" + encodeURIComponent(ticket));
+      keyEs.addEventListener("licenses-changed", function () { keyFailCount = 0; refreshVisibleStates(); });
+      keyEs.onerror = function () {
+        keyEs.close(); keyEs = null;
+        // 连续失败超过 5 次（通常为管理密钥无效被 401），停止重连，避免无效请求循环。
+        if (++keyFailCount >= 5) { keyFailCount = 0; toast("登录已失效或服务不可用，密钥状态推送已停止"); return; }
+        setTimeout(connectKeySse, 3000);
+      };
+    } catch (e) { /* 忽略 */ }
+  }
+
+  // 批量刷新当前页密钥状态：按 key 更新行内状态/时长等，保留复选框勾选与滚动位置，避免整表重绘抖动。
+  async function refreshVisibleStates() {
+    try {
+      var url = "/admin/licenses?page=" + state.page + "&pageSize=" + state.pageSize;
+      if (state.status) url += "&status=" + encodeURIComponent(state.status);
+      var data = await req("GET", url);
+      var items = data.items || [];
+      state.total = data.total || 0;
+      var tbody = document.querySelector("#listWrap tbody");
+      if (!tbody) return;
+      items.forEach(function (item) {
+        var row = tbody.querySelector('input.row-check[data-key="' + item.key.replace(/"/g, "") + '"]');
+        if (!row) return;
+        var cells = row.closest("tr").cells;
+        if (cells.length < 7) return;
+        var remaining = item.remainingSeconds;
+        cells[2].innerHTML = statusBadge(item.status);
+        cells[3].textContent = item.totalSeconds > 0 ? formatSeconds(Math.max(0, remaining)) + " / " + formatSeconds(item.totalSeconds) : "已到期";
+        cells[4].textContent = item.remainingCount;
+        cells[5].textContent = item.totalSeconds > 0 ? formatTime(new Date(Date.now() + item.remainingSeconds * 1000)) : "已到期";
+      });
+    } catch (e) { /* 静默失败，下次推送或手动刷新重试 */ }
+  }
+
+  // ---------- 初始化 ----------
+  document.getElementById("tokenInput").value = "";
+  loadSwitches();
+  (async function () {
+    var ok = await checkAdminSession();
+    if (ok) {
+      authed = true;
+      document.getElementById("saveTokenBtn").style.display = "none";
+      document.getElementById("logoutBtn").style.display = "";
+      document.getElementById("tokenInput").style.display = "none";
+      loadKeys();
+      void connectKeySse();
+    } else {
+      showLoginPrompt();
+    }
+    // 会话检查完成，隐藏加载遮罩，避免登录区闪烁。
+    var overlay = document.getElementById("loadingOverlay");
+    if (overlay) overlay.style.display = "none";
+  })();
+  void connectSse();
+})();
+</script>
+</body>
+</html>

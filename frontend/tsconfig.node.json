@@ -1,0 +1,13 @@
+{
+  // 文件用途：Vite 配置等 Node 侧 TypeScript 编译配置。
+  // 版权：@董志伟-联系方式-makabak1204
+  // 最后修改：2026-08-21
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}

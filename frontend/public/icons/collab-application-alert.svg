@@ -1,0 +1,24 @@
+<!--
+  文件用途：好友联机申请提醒图标。
+  核心职责：以双人剪影、申请加号与提醒圆点表达“有人申请加入联机”。
+  版权：@董志伟-联系方式-makabak1204
+  最后修改：2026-08-26
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">联机申请提醒</title>
+  <desc id="desc">绿色圆角图标内有两位好友和珊瑚色申请提醒标记</desc>
+  <defs>
+    <linearGradient id="tile" x1="10" y1="7" x2="53" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fffdf7"/>
+      <stop offset="1" stop-color="#f1f8f3"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="18" fill="url(#tile)" stroke="#14543d" stroke-width="3"/>
+  <circle cx="25" cy="25" r="7" fill="#14543d"/>
+  <path d="M12 47c.3-9.1 5.8-14 13-14 6.7 0 11.8 3.8 12.8 11.5V47z" fill="#14543d"/>
+  <circle cx="42" cy="29" r="5.5" fill="#2f7d5d" stroke="#fffdf7" stroke-width="2"/>
+  <path d="M34.5 47c.2-6.3 3-9.7 7.5-9.7 4 0 6.9 2.8 7.5 8.2V47z" fill="#2f7d5d" stroke="#fffdf7" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="49" cy="15" r="10" fill="#ff6b57" stroke="#fffdf7" stroke-width="2.5"/>
+  <path d="M49 10.5v9M44.5 15h9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="17.5" cy="18.5" r="1.8" fill="#fff" opacity=".72"/>
+</svg>

@@ -1,0 +1,11 @@
+# 文件：robots.txt
+# 用途：允许搜索引擎抓取公开工作台，同时排除后台与接口路径。
+# 版权：@董志伟-联系方式-makabak1204
+# 最后修改：2026-08-24
+
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+
+Sitemap: https://yysls.online/sitemap.xml
