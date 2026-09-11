@@ -59,6 +59,49 @@ const {
   mergeStats,
 } = storeToRefs(store)
 
+// PC 快捷色栏使用稳定队列：初始化时优先装入当前色和已使用色，之后不再跟随豆子数量重新排序。
+// 当前选中色若已在列表中则保持原位置，只有不在列表中时才插入首位。
+const quickPaletteColorIds = ref<string[]>([])
+
+watch(colors, (currentColors, previousColors) => {
+  const currentIds = currentColors.map(color => color.id)
+  const currentIdSet = new Set(currentIds)
+  const previousIds = previousColors?.map(color => color.id) ?? []
+  // 色号选择器追加一个候选色时先保留现有队列，随后由 selectedColorIndex 监听决定是否插到首位。
+  const isPaletteAppend = previousIds.length > 0
+    && currentIds.length > previousIds.length
+    && previousIds.every((id, index) => currentIds[index] === id)
+
+  if (isPaletteAppend) {
+    quickPaletteColorIds.value = quickPaletteColorIds.value.filter(id => currentIdSet.has(id))
+    return
+  }
+
+  const selectedId = currentColors[selectedColorIndex.value]?.id
+  const usedIds = currentColors
+    .filter((_, index) => (colorCounts.value[index] ?? 0) > 0)
+    .map(color => color.id)
+  quickPaletteColorIds.value = [...new Set([
+    ...(selectedId ? [selectedId] : []),
+    ...usedIds,
+    ...currentIds,
+  ])].slice(0, 8)
+}, { immediate: true, flush: 'post' })
+
+watch(selectedColorIndex, (index) => {
+  const selectedId = colors.value[index]?.id
+  if (!selectedId || quickPaletteColorIds.value.includes(selectedId)) return
+  quickPaletteColorIds.value = [selectedId, ...quickPaletteColorIds.value].slice(0, 8)
+}, { flush: 'sync' })
+
+const quickPaletteColors = computed(() => {
+  return quickPaletteColorIds.value.flatMap(id => {
+    const index = colors.value.findIndex(color => color.id === id)
+    const color = colors.value[index]
+    return index >= 0 && color ? [{ color, index }] : []
+  })
+})
+
 // 好友联机：房间、成员、邀请码、审批与编辑权限统一由联机状态仓库维护，UI 只负责展示与触发。
 const collab = useCollabStore()
 const {
@@ -245,6 +288,12 @@ const trialExpired = ref(false)
 const trialResolved = ref(false)
 // 后端通过配置关闭授权/试用功能；为 true 时隐藏授权与试用入口，并保持宽松放行。
 const licensingDisabled = ref(false)
+// 顶部只承担异常提醒：有效授权和正常试用均不占用导航空间，入口仍可从“功能”面板进入。
+const showTopLicenseEntry = computed(() => {
+  if (licensingDisabled.value) return false
+  if (!licensedKey.value) return trialExpired.value
+  return licenseInfo.value?.status === 'time_expired' || licenseInfo.value?.status === 'exhausted'
+})
 // 开关状态主通道为 SSE 长连接（空闲时几乎无流量）；轮询仅作为断线时的低频兜底，避免双重请求开销。
 let switchPollTimer = 0
 const switchPollInterval = 60000
@@ -1593,6 +1642,16 @@ function handleColorPick(index: number): void {
   if (index >= colors.value.length) {
     const pick = palette.value?.colors[index - colors.value.length]
     if (pick) index = store.addColor(pick)
+  }
+  selectedColorIndex.value = index
+  interactionMode.value = 'paint'
+}
+
+// 快捷色栏只负责快速切换画笔颜色，不提升排序，避免点击后按钮突然换位。
+function handleQuickPalettePick(index: number): void {
+  if (editingLocked.value) {
+    notify('使用期限已到，豆板编辑已锁定')
+    return
   }
   selectedColorIndex.value = index
   interactionMode.value = 'paint'
@@ -3377,7 +3436,7 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
           <AppIcon name="cloud" />{{ cloudSaveStatus }}
         </span>
         <button
-          v-if="!licensingDisabled"
+          v-if="showTopLicenseEntry"
           class="license-entry-button"
           type="button"
           :class="{ 'is-trial-expired': !licensedKey && trialExpired, 'license-expired': licensedKey && (licenseInfo?.status === 'time_expired' || licenseInfo?.status === 'exhausted') }"
@@ -3390,26 +3449,27 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
           <template v-else>试用 {{ trialRemainingLabel }}</template>
         </button>
         <button
-          v-if="!licensingDisabled"
+          v-if="showTopLicenseEntry"
           class="license-entry-button mobile-license-entry-button"
           type="button"
           :class="{ 'is-trial-expired': !licensedKey && trialExpired, 'license-expired': licensedKey && (licenseInfo?.status === 'time_expired' || licenseInfo?.status === 'exhausted') }"
           aria-label="授权与试用"
           @click="openLicenseDialog"
         >
-          <AppIcon name="license" /><span>授权与试用</span>
+          <AppIcon name="license" />
+          <span>{{ licensedKey ? licenseEntryLabel : '试用已到期' }}</span>
         </button>
         <button
           class="nav-function-toggle"
           type="button"
           :aria-expanded="!toolsCollapsed"
-          aria-label="功能"
-          title="功能"
+          :aria-label="isMobileLayout ? '更多功能' : '功能'"
+          :title="isMobileLayout ? '更多' : '功能'"
           aria-controls="stage-tools"
           @click="toggleTools"
         >
           <AppIcon name="menu" />
-          <span>功能</span>
+          <span>{{ isMobileLayout ? '更多' : '功能' }}</span>
         </button>
         <button class="nav-generate-button" type="button" aria-label="打开图纸生成" @click="openSettingsDialog">
           <span class="nav-generate-label-full">生成图纸</span>
@@ -4173,7 +4233,8 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
         class="center-stage"
         :class="{ 'is-fullscreen': isFullscreen, 'force-landscape': forceLandscape, 'tools-collapsed': toolsCollapsed, 'generation-panel-open': generationPanelOpen && generationPanelDocked }"
       >
-        <div v-if="!isMobileLayout" class="quick-edit-toolbar panel" aria-label="快捷编辑工具">
+        <!-- 全屏时统一使用左侧快捷编辑栏，避免横屏后的 JS 布局状态与 CSS 断点不同步而两套工具栏同时消失。 -->
+        <div v-if="!isMobileLayout || isFullscreen" class="quick-edit-toolbar panel" aria-label="快捷编辑工具">
           <div class="quick-edit-body">
             <section class="quick-edit-section draw-edit-group" aria-label="操作">
               <span class="quick-edit-label">操作</span>
@@ -4193,20 +4254,21 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
               <span class="quick-edit-label">颜色</span>
               <div class="quick-color-grid">
                 <button
-                  v-for="(color, index) in colors.slice(0, 8)"
-                  :key="color.id"
+                  v-for="entry in quickPaletteColors"
+                  :key="entry.color.id"
                   type="button"
-                  :class="{ active: selectedColorIndex === index }"
-                  :style="{ '--quick-color': color.hex }"
-                  :title="`${color.code} ${color.name}`"
-                  :aria-label="`选择 ${color.code} ${color.name}`"
-                  @click="handleColorPick(index)"
+                  :class="{ active: selectedColorIndex === entry.index }"
+                  :style="{ '--quick-color': entry.color.hex }"
+                  :title="`${entry.color.code} ${entry.color.name}`"
+                  :aria-label="`选择 ${entry.color.code} ${entry.color.name}`"
+                  @click="handleQuickPalettePick(entry.index)"
                 ><i></i></button>
                 <ColorPickerPopover
                   class="rail-color-picker"
                   :model-value="selectedColorIndex"
                   :colors="colors"
                   :item-counts="colorCounts"
+                  :usage-revision="contentRevision"
                   :extra-colors="palette?.colors"
                   :brand-name="selectedBrand?.name"
                   :palette-name="currentPaletteSummary?.name"
@@ -4225,7 +4287,7 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
           </div>
         </div>
         <StudioMobileNav
-          v-if="isMobileLayout"
+          v-if="isMobileLayout && !isFullscreen"
           :interaction-mode="interactionMode"
           :selected-color-index="selectedColorIndex"
           :colors="colors"
@@ -4233,16 +4295,14 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
           :extra-colors="palette?.colors"
           :brand-name="selectedBrand?.name"
           :palette-name="currentPaletteSummary?.name"
-          :tools-open="!toolsCollapsed"
           :editing-disabled="editingLocked || collabReadOnly"
           @pan="selectPanQuickTool"
           @paint="selectPaintQuickTool"
           @erase="selectEraserQuickTool"
           @copy="selectCopyColorQuickTool"
           @update:color="handleColorPick"
-          @more="toggleTools"
         />
-        <div v-if="isMobileLayout" class="studio-history-strip" role="group" aria-label="撤销与恢复">
+        <div v-if="isMobileLayout && !isFullscreen" class="studio-history-strip" role="group" aria-label="撤销与恢复">
           <button
             type="button"
             title="撤销"
@@ -4311,10 +4371,10 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
                 :disabled="collab.permCooldownRemaining('edit') > 0"
                 @click="handlePermApply('edit')"
               ><AppIcon name="edit-permission" />申请编辑</button>
-              <button v-if="isMobileLayout" type="button" :class="{ active: beadShape === 'circle' }" @click="beadShape = 'circle'">
+              <button v-if="isMobileLayout" class="toolbar-toggle-button" type="button" :class="{ active: beadShape === 'circle' }" :aria-pressed="beadShape === 'circle'" @click="beadShape = 'circle'">
                 <AppIcon name="round-bead" />圆豆
               </button>
-              <button v-if="isMobileLayout" type="button" :class="{ active: beadShape === 'square' }" @click="beadShape = 'square'">
+              <button v-if="isMobileLayout" class="toolbar-toggle-button" type="button" :class="{ active: beadShape === 'square' }" :aria-pressed="beadShape === 'square'" @click="beadShape = 'square'">
                 <AppIcon name="color-block" />色块
               </button>
               <button v-if="collabIsMember" type="button" @click="requestMemberExit"><AppIcon name="exit" />退出联机</button>
@@ -4323,11 +4383,11 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
           <div class="toolbar-section mobile-display-tools">
             <span class="toolbar-label">显示</span>
             <div class="tool-group">
-              <button type="button" :class="{ active: showGrid }" @click="showGrid = !showGrid"><AppIcon name="grid" />网格</button>
-              <button type="button" :class="{ active: showCodes }" @click="showCodes = !showCodes"><AppIcon name="code" />色号</button>
-              <button type="button" :class="{ active: showBoardSplit }" @click="showBoardSplit = !showBoardSplit"><AppIcon name="stitch" />分板线</button>
-              <button type="button" :class="{ active: showCoordinates }" @click="showCoordinates = !showCoordinates"><AppIcon name="locate" />坐标</button>
-              <button type="button" :class="{ active: soundEnabled }" @click="sound.toggle()"><AppIcon name="volume" />声音</button>
+              <button class="toolbar-toggle-button" type="button" :class="{ active: showGrid }" :aria-pressed="showGrid" @click="showGrid = !showGrid"><AppIcon name="grid" />网格</button>
+              <button class="toolbar-toggle-button" type="button" :class="{ active: showCodes }" :aria-pressed="showCodes" @click="showCodes = !showCodes"><AppIcon name="code" />色号</button>
+              <button class="toolbar-toggle-button" type="button" :class="{ active: showBoardSplit }" :aria-pressed="showBoardSplit" @click="showBoardSplit = !showBoardSplit"><AppIcon name="stitch" />分板线</button>
+              <button class="toolbar-toggle-button" type="button" :class="{ active: showCoordinates }" :aria-pressed="showCoordinates" @click="showCoordinates = !showCoordinates"><AppIcon name="locate" />坐标</button>
+              <button class="toolbar-toggle-button" type="button" :class="{ active: soundEnabled }" :aria-pressed="soundEnabled" @click="sound.toggle()"><AppIcon name="volume" />声音</button>
             </div>
           </div>
           <div class="toolbar-section function-tools">
@@ -4340,9 +4400,10 @@ function handleReplaceDecide(applyId: string, accept: boolean): void {
               <!-- 好友联机入口：授权关闭或试用到期（无密钥）时隐藏，联机不可用 -->
               <button
                 v-if="!licensingDisabled && !(trialExpired && !licensedKey)"
-                class="collab-entry-button"
+                class="collab-entry-button toolbar-toggle-button"
                 :class="{ active: collabActive }"
                 type="button"
+                :aria-pressed="collabActive"
                 :disabled="!hasPattern"
                 @click="openCollabDialog"
               >

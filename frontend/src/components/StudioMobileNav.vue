@@ -1,9 +1,9 @@
 <!--
   文件：StudioMobileNav.vue
   用途：提供 V3 移动端工作台底部高频操作导航。
-  核心职责：集中呈现拖拽、豆笔、镊子、复制颜色、颜色和更多入口，并复用现有色号选择器。
+  核心职责：集中呈现拖拽、豆笔、镊子、复制颜色和颜色入口，并复用现有色号选择器。
   版权：@董志伟-联系方式-makabak1204
-  最后修改：2026-09-10
+  最后修改：2026-09-11
 -->
 
 <script setup lang="ts">
@@ -19,7 +19,6 @@ defineProps<{
   extraColors?: BeadColor[]
   brandName?: string
   paletteName?: string
-  toolsOpen: boolean
   editingDisabled: boolean
 }>()
 
@@ -29,7 +28,6 @@ const emit = defineEmits<{
   erase: []
   copy: []
   'update:color': [value: number]
-  more: []
 }>()
 </script>
 
@@ -60,8 +58,5 @@ const emit = defineEmits<{
       />
       <span>颜色</span>
     </div>
-    <button type="button" :class="{ active: toolsOpen }" :aria-expanded="toolsOpen" aria-controls="stage-tools" @click="emit('more')">
-      <AppIcon name="menu" /><span>更多</span>
-    </button>
   </nav>
 </template>

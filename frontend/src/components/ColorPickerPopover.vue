@@ -3,7 +3,7 @@
   用途：提供可搜索、可键盘操作并能适配移动端/全屏模式的色号选择面板。
   核心职责：筛选厂家色卡、计算安全弹出位置、维护焦点和向父组件返回原始颜色索引。
   版权：@董志伟-联系方式-makabak1204
-  最后修改：2026-09-04
+  最后修改：2026-09-11
 -->
 
 <script setup lang="ts">
@@ -22,6 +22,8 @@ const props = defineProps<{
   allowedIndices?: number[]
   /** 按原始色卡索引提供使用数量；仅颜色替换等需要用量信息的场景传入。 */
   itemCounts?: Record<number, number> | number[]
+  /** 用量数组原地更新时用于刷新“已使用/未使用”分组，避免大图编辑时复制整份统计数组。 */
+  usageRevision?: number
   /** 未使用的候选色号（如完整品牌色卡），并入「未使用」分区；选中后由父组件追加为新色号。 */
   extraColors?: BeadColor[]
   /** 移动端底部导航使用调色盘主图标，完整面板仍显示实际选中色号。 */
@@ -86,9 +88,17 @@ function isUsed(index: number): boolean {
   return (props.itemCounts?.[index] ?? 0) > 0
 }
 
-// 将色号拆成「已使用 / 未使用」两个独立分区，各自保持原始色卡顺序。
-const usedColors = computed(() => filteredColors.value.filter(item => isUsed(item.index)))
-const unusedColors = computed(() => filteredColors.value.filter(item => !isUsed(item.index)))
+// usageRevision 显式参与依赖追踪：itemCounts 是性能优化后的非深层响应数组，其元素变化不会自行使 computed 失效。
+const usedColors = computed(() => {
+  void props.usageRevision
+  return filteredColors.value
+    .filter(item => isUsed(item.index))
+    .sort((first, second) => (props.itemCounts?.[second.index] ?? 0) - (props.itemCounts?.[first.index] ?? 0))
+})
+const unusedColors = computed(() => {
+  void props.usageRevision
+  return filteredColors.value.filter(item => !isUsed(item.index))
+})
 
 const selectedColor = computed(() => props.modelValue >= 0 ? props.colors[props.modelValue] : null)
 const selectedCount = computed(() => props.itemCounts?.[props.modelValue])

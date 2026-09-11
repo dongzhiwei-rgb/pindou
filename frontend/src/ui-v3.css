@@ -1224,8 +1224,7 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   .top-actions { gap: 6px; }
   .studio-collaborators,
   .studio-save-indicator,
-  .top-actions > .license-entry-button:not(.mobile-license-entry-button),
-  .top-actions > .nav-function-toggle { display: none !important; }
+  .top-actions > .license-entry-button:not(.mobile-license-entry-button) { display: none !important; }
 
   .top-actions > .mobile-license-entry-button {
     display: inline-flex;
@@ -1239,6 +1238,21 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   }
 
   .mobile-license-entry-button .app-icon { width: 15px; height: 15px; }
+
+  /* 窄屏把“更多”迁移到顶部，与生成入口并列，底部只保留高频编辑工具。 */
+  .top-actions > .nav-function-toggle {
+    display: inline-grid;
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    place-items: center;
+    border-radius: 8px;
+  }
+
+  .top-actions > .nav-function-toggle .app-icon {
+    width: 18px;
+    height: 18px;
+  }
 
   .nav-generate-button {
     min-height: 34px;
@@ -1284,7 +1298,7 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
     bottom: 0;
     left: 0;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     height: calc(66px + env(safe-area-inset-bottom));
     padding: 5px max(8px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border-top: 1px solid var(--line-v3);
@@ -1521,9 +1535,131 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
     top: calc(var(--stage-safe-top) + 46px);
     left: var(--stage-safe-left);
   }
-  .floating-generate-button { right: calc(var(--stage-safe-right) + 92px); }
-  .floating-toolbar-toggle { display: none; }
+  /* 全屏进入时功能面板会自动收起，必须保留重新展开入口；三个按钮从右向左依次排列。 */
+  .floating-generate-button { right: calc(var(--stage-safe-right) + 182px); }
+  .center-stage:is(:fullscreen, .is-fullscreen) .floating-toolbar-toggle {
+    right: calc(var(--stage-safe-right) + 98px);
+    display: inline-flex;
+  }
   .fullscreen-exit-button { right: var(--stage-safe-right); }
+}
+
+/*
+ * 全屏快捷编辑栏脱离画布网格定位。
+ * 浏览器进入原生全屏后会重新计算视口与媒体查询；如果继续依赖 grid-column，
+ * 网格断点切换期间工具栏可能被画布轨道裁掉。这里用明确的安全区锚点和尺寸
+ * 保证 PC、手机以及仅能模拟横屏的 WebView 都始终保留编辑入口。
+ */
+@media (min-width: 821px) {
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar {
+    position: absolute;
+    z-index: 470;
+    top: calc(var(--stage-safe-top) + 50px);
+    right: auto;
+    bottom: calc(var(--stage-safe-bottom) + 8px);
+    left: var(--stage-safe-left);
+    display: block;
+    width: 84px;
+    height: auto;
+    max-width: 84px;
+    max-height: none;
+    margin: 0;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar {
+    position: absolute;
+    z-index: 470;
+    top: calc(var(--stage-safe-top) + 48px);
+    right: auto;
+    bottom: calc(var(--stage-safe-bottom) + 8px);
+    left: var(--stage-safe-left);
+    display: block;
+    width: 72px;
+    height: auto;
+    max-width: 72px;
+    max-height: none;
+    margin: 0;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+}
+
+@media (max-width: 480px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar {
+    top: auto;
+    right: var(--stage-safe-right);
+    bottom: var(--stage-safe-bottom);
+    left: var(--stage-safe-left);
+    width: auto;
+    max-width: none;
+    height: 96px;
+    max-height: 96px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body {
+    flex-direction: row;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+/* 常见手机顶部空间足够时保留完整品牌名；仅极窄屏退化为品牌豆子图标。 */
+@media (min-width: 360px) and (max-width: 820px) {
+  .topbar { grid-template-columns: minmax(112px, 1fr) auto; }
+  .brand {
+    width: max-content;
+    max-width: 100%;
+    gap: 8px;
+  }
+  .brand > span:last-child {
+    display: flex;
+    min-width: 0;
+  }
+  .brand b {
+    font-size: 17px;
+    letter-spacing: -.04em;
+    white-space: nowrap;
+  }
 }
 
 @media (max-width: 479px) {
@@ -1555,7 +1691,7 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
     bottom: max(6px, env(safe-area-inset-bottom));
     left: auto;
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(6, minmax(38px, 1fr));
+    grid-template-rows: repeat(5, minmax(38px, 1fr));
     width: 62px;
     height: auto;
     padding: 5px;
@@ -1589,7 +1725,7 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   bottom: var(--stage-safe-bottom);
   left: auto;
   grid-template-columns: 1fr;
-  grid-template-rows: repeat(6, minmax(38px, 1fr));
+  grid-template-rows: repeat(5, minmax(38px, 1fr));
   width: 62px;
   height: auto;
   padding: 5px;
@@ -2134,6 +2270,186 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   }
 }
 
+/* 手机全屏统一挂载快捷编辑栏；默认使用左侧竖栏，内容过高时栏内滚动。 */
+@media (max-width: 820px) {
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar {
+    position: absolute;
+    z-index: 470;
+    top: calc(var(--stage-safe-top) + 48px);
+    right: auto;
+    bottom: calc(var(--stage-safe-bottom) + 8px);
+    left: var(--stage-safe-left);
+    display: block;
+    width: 72px;
+    height: auto;
+    max-width: 72px;
+    max-height: none;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-body {
+    height: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+  }
+}
+
+/* 移动端全屏工具栏自适应：常规空间用左侧竖栏，并为画布让出操作宽度。 */
+@media (max-width: 820px) {
+  .center-stage:is(:fullscreen, .is-fullscreen) .canvas-frame {
+    margin: 0 0 0 80px;
+  }
+}
+
+/* 窄屏或低高度横屏改用底部横向工具坞，分组过多时可左右滑动。 */
+@media (max-width: 480px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar {
+    top: auto;
+    right: var(--stage-safe-right);
+    bottom: var(--stage-safe-bottom);
+    left: var(--stage-safe-left);
+    width: auto;
+    max-width: none;
+    height: 96px;
+    max-height: 96px;
+    padding: 6px;
+    border: 1px solid var(--line-v3);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: var(--shadow-2-v3);
+    backdrop-filter: blur(14px);
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-body {
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    touch-action: pan-x;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-section {
+    width: auto;
+    min-width: max-content;
+    height: 100%;
+    padding: 4px 6px;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group {
+    width: auto;
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button {
+    width: 40px;
+    min-width: 40px;
+    height: 38px;
+    min-height: 38px;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon {
+    width: 21px;
+    height: 21px;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid {
+    grid-template-columns: repeat(5, 24px);
+    gap: 4px;
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .canvas-frame {
+    margin: 0 0 calc(104px + var(--stage-safe-bottom));
+  }
+
+  .center-stage:is(:fullscreen, .is-fullscreen) .canvas-command-dock {
+    bottom: calc(104px + var(--stage-safe-bottom));
+  }
+}
+
+/* 微信/iOS 强制旋转后的内部画布是横向坐标系，直接采用底部工具坞而不依赖媒体方向。 */
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar {
+  top: auto;
+  right: var(--stage-safe-right);
+  bottom: var(--stage-safe-bottom);
+  left: var(--stage-safe-left);
+  width: auto;
+  max-width: none;
+  height: 96px;
+  max-height: 96px;
+  padding: 6px;
+  border: 1px solid var(--line-v3);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: var(--shadow-2-v3);
+  backdrop-filter: blur(14px);
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-body {
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-section {
+  width: auto;
+  min-width: max-content;
+  height: 100%;
+  padding: 4px 6px;
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group {
+  width: auto;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button {
+  width: 40px;
+  min-width: 40px;
+  height: 38px;
+  min-height: 38px;
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid {
+  grid-template-columns: repeat(5, 24px);
+  gap: 4px;
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-frame {
+  margin: 0 0 calc(104px + var(--stage-safe-bottom));
+}
+
+.center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-command-dock {
+  bottom: calc(104px + var(--stage-safe-bottom));
+}
+
 @media (min-width: 1024px) and (max-width: 1180px) {
   .center-stage.generation-panel-open { grid-template-columns: 82px minmax(0, 1fr) 326px; }
   .settings-dialog.is-docked-generation[open] { width: 308px; }
@@ -2352,6 +2668,64 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   }
 }
 
+/*
+ * “更多”里的状态按钮使用统一选中规范。
+ * 未选中状态显式恢复白底，避免触屏设备残留 hover；选中状态统一增加品牌色描边与状态圆点。
+ */
+.stage-toolbar .tool-group > button.toolbar-toggle-button {
+  position: relative;
+  transition: border-color .14s ease, background-color .14s ease, color .14s ease, box-shadow .14s ease;
+}
+
+.stage-toolbar .tool-group > button.toolbar-toggle-button:not(.active),
+.stage-toolbar .function-tools .tool-group > button.collab-entry-button.toolbar-toggle-button:not(.active) {
+  border-color: var(--line-v3);
+  background: #fff;
+  color: var(--ink-700);
+  box-shadow: none;
+  font-weight: 500;
+}
+
+.stage-toolbar .tool-group > button.toolbar-toggle-button.active,
+.stage-toolbar .function-tools .tool-group > button.collab-entry-button.toolbar-toggle-button.active {
+  border-color: var(--brand-500);
+  background: linear-gradient(180deg, #def5ec, #cceee1);
+  color: var(--brand-900);
+  box-shadow: inset 0 0 0 1px rgba(31, 128, 101, .12);
+  font-weight: 700;
+}
+
+.stage-toolbar .tool-group > button.toolbar-toggle-button.active::after {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgba(255, 255, 255, .92);
+  border-radius: 50%;
+  background: var(--brand-500);
+  box-shadow: 0 0 0 1px rgba(20, 92, 71, .12);
+  content: '';
+}
+
+@media (hover: hover) {
+  .stage-toolbar .tool-group > button.toolbar-toggle-button:hover:not(:disabled):not(.active),
+  .stage-toolbar .function-tools .tool-group > button.collab-entry-button.toolbar-toggle-button:hover:not(:disabled):not(.active) {
+    border-color: #cbded6;
+    background: #f8fbf9;
+    color: var(--ink-900);
+  }
+
+  /* 覆盖旧版联机珊瑚色 hover，避免统一选中态的深绿文字落在红色背景上。 */
+  .stage-toolbar .function-tools .tool-group > button.collab-entry-button.toolbar-toggle-button.active:hover:not(:disabled) {
+    border-color: var(--brand-500);
+    background: linear-gradient(180deg, #d8f3e8, #c3e9da);
+    color: var(--brand-900);
+    box-shadow: inset 0 0 0 1px rgba(31, 128, 101, .16);
+    transform: none;
+  }
+}
+
 .collab-apply-actions button {
   display: inline-flex;
   align-items: center;
@@ -2500,7 +2874,7 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
     left: auto;
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(6, minmax(38px, 1fr));
+    grid-template-rows: repeat(5, minmax(38px, 1fr));
     width: 62px;
     height: auto;
     padding: 5px;
