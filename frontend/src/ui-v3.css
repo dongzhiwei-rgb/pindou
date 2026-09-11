@@ -1731,6 +1731,289 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   .settings-dialog { right: calc(68px + env(safe-area-inset-right)); bottom: 0; width: calc(100% - 68px - env(safe-area-inset-right)); }
 }
 
+/* ==================== 移动端横屏全屏紧凑工具布局 ==================== */
+
+/*
+ * 横屏手机的纵向空间非常有限，工具只保留必要触控面积并集中停靠在左下角。
+ * 这里必须同时覆盖原生横屏与微信/iOS 的强制旋转模式；桌面端不会命中粗指针条件。
+ */
+@media (max-width: 820px) and (pointer: coarse),
+       (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .floating-generate-button,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .floating-toolbar-toggle,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .fullscreen-exit-button {
+    top: calc(var(--stage-safe-top) + 3px);
+    width: auto;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px;
+    gap: 4px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1;
+    box-shadow: 0 3px 10px rgba(20, 84, 61, .12);
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .floating-generate-button {
+    right: calc(var(--stage-safe-right) + 140px);
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .floating-toolbar-toggle {
+    right: calc(var(--stage-safe-right) + 80px);
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .fullscreen-exit-button {
+    right: var(--stage-safe-right);
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .floating-generate-button .app-icon,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .floating-toolbar-toggle .app-icon,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .fullscreen-exit-button .app-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar {
+    right: auto;
+    bottom: var(--stage-safe-bottom);
+    left: calc(var(--stage-safe-left) + 132px);
+    width: max-content;
+    max-width: calc(100% - var(--stage-safe-left) - var(--stage-safe-right) - 136px);
+    height: 42px;
+    max-height: 42px;
+    padding: 3px;
+    border-radius: 10px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body {
+    width: max-content;
+    max-width: 100%;
+    justify-content: flex-start;
+    gap: 3px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-section,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-section {
+    height: 34px;
+    min-height: 34px;
+    gap: 2px;
+    padding: 1px 2px;
+    border-radius: 8px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group {
+    gap: 2px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    border-radius: 8px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* 横屏仅显示前三个快捷色，完整色卡仍由末尾的“+”入口打开。 */
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid {
+    grid-template-columns: repeat(4, 16px);
+    grid-template-rows: 16px;
+    gap: 2px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid > button:nth-of-type(n + 4),
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid > button:nth-of-type(n + 4) {
+    display: none;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid > button,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid > button,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button {
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+    min-height: 16px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid > button i,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid > button i {
+    width: 12px;
+    height: 12px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button::after,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button::after {
+    font-size: 12px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-command-dock,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-command-dock {
+    right: auto;
+    bottom: var(--stage-safe-bottom);
+    left: var(--stage-safe-left);
+    width: 126px;
+    max-width: 126px;
+    min-height: 42px;
+    padding: 3px;
+    border-radius: 10px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-view-controls,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-view-controls {
+    gap: 2px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-zoom-control,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-zoom-control {
+    width: 88px;
+    min-height: 32px;
+    padding-inline: 4px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-fit-button,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-fit-button {
+    width: 30px;
+    min-width: 30px;
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .canvas-frame,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .canvas-frame {
+    margin: 0 0 calc(46px + var(--stage-safe-bottom));
+  }
+}
+
+/* 提高移动粗指针规则的选择器优先级，避免后续历史横屏兼容规则重新放大工具组件。 */
+@media (max-width: 820px) and (pointer: coarse),
+       (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar {
+    right: auto;
+    bottom: var(--stage-safe-bottom);
+    left: calc(var(--stage-safe-left) + 132px);
+    width: max-content;
+    max-width: calc(100% - var(--stage-safe-left) - var(--stage-safe-right) - 136px);
+    height: 42px;
+    max-height: 42px;
+    padding: 3px;
+    border-radius: 10px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body {
+    width: max-content;
+    max-width: 100%;
+    justify-content: flex-start;
+    gap: 3px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-section,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-section {
+    height: 34px;
+    min-height: 34px;
+    gap: 2px;
+    padding: 1px 2px;
+    border-radius: 8px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group {
+    gap: 2px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    border-radius: 8px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid {
+    grid-template-columns: repeat(4, 16px);
+    grid-template-rows: 16px;
+    gap: 2px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid > button,
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker,
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid > button,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button {
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+    min-height: 16px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid > button i,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid > button i {
+    width: 12px;
+    height: 12px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-command-dock,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-command-dock {
+    right: auto;
+    bottom: var(--stage-safe-bottom);
+    left: var(--stage-safe-left);
+    width: 126px;
+    max-width: 126px;
+    min-height: 42px;
+    padding: 3px;
+    border-radius: 10px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-zoom-control,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-zoom-control {
+    width: 88px;
+    min-height: 32px;
+    padding-inline: 4px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-fit-button,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-fit-button {
+    width: 30px;
+    min-width: 30px;
+    height: 32px;
+    min-height: 32px;
+  }
+
+  body .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .canvas-frame,
+  body .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .canvas-frame {
+    margin: 0 0 calc(46px + var(--stage-safe-bottom));
+  }
+}
+
 /* ==================== 真机移动端工作区收口 ==================== */
 
 /*
