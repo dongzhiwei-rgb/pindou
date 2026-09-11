@@ -1747,8 +1747,8 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
     bottom: calc(66px + max(6px, env(safe-area-inset-bottom)));
     left: max(8px, env(safe-area-inset-left));
     display: flex;
-    width: auto;
-    max-width: calc(100vw - 70px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    width: min(174px, calc(100vw - 58px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    max-width: 174px;
     min-height: 36px;
     padding: 3px;
     overflow: visible;
@@ -1774,12 +1774,23 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   }
 
   .app-shell .center-stage:not(:fullscreen):not(.is-fullscreen) .fullscreen-enter-button {
-    right: max(10px, env(safe-area-inset-right));
+    position: fixed;
+    z-index: 312;
+    right: auto;
     bottom: calc(66px + max(6px, env(safe-area-inset-bottom)));
+    /* 与 174px 宽的缩放 Dock 保持 6px 间距；避免部分内置浏览器无法解析嵌套 min()/calc() 后丢弃定位。 */
+    left: calc(max(8px, env(safe-area-inset-left)) + 180px);
+    display: inline-grid;
     width: 36px;
     min-width: 36px;
     height: 36px;
     min-height: 36px;
+    place-items: center;
+    margin: 0;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
   }
 }
 
