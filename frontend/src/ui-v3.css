@@ -1731,6 +1731,227 @@ dialog::backdrop { background: rgba(20, 31, 26, .48); backdrop-filter: blur(4px)
   .settings-dialog { right: calc(68px + env(safe-area-inset-right)); bottom: 0; width: calc(100% - 68px - env(safe-area-inset-right)); }
 }
 
+/* ==================== 真机移动端工作区收口 ==================== */
+
+/*
+ * 普通手机工作台把缩放 Dock 固定在底部导航正上方。
+ * 它不再依赖 canvas-frame 的实际高度，因此地址栏伸缩、软键盘和异形屏安全区
+ * 都不会把进度条裁到画布外；右侧固定预留全屏按钮的点击空间。
+ */
+@media (max-width: 820px) {
+  .app-shell .center-stage:not(:fullscreen):not(.is-fullscreen) .canvas-command-dock {
+    position: fixed;
+    z-index: 310;
+    top: auto;
+    right: auto;
+    bottom: calc(66px + max(6px, env(safe-area-inset-bottom)));
+    left: max(8px, env(safe-area-inset-left));
+    display: flex;
+    width: auto;
+    max-width: calc(100vw - 70px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    min-height: 36px;
+    padding: 3px;
+    overflow: visible;
+    opacity: .92;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .app-shell .center-stage:not(:fullscreen):not(.is-fullscreen) .canvas-view-controls {
+    display: flex;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .app-shell .center-stage:not(:fullscreen):not(.is-fullscreen) .canvas-zoom-control {
+    display: flex;
+    width: clamp(108px, 32vw, 126px);
+    min-width: 0;
+    min-height: 30px;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .app-shell .center-stage:not(:fullscreen):not(.is-fullscreen) .fullscreen-enter-button {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: calc(66px + max(6px, env(safe-area-inset-bottom)));
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+}
+
+/*
+ * 手机全屏默认横屏：缩放与快捷编辑共享同一条底部基线。
+ * 缩放区占左侧固定宽度，操作/颜色/历史在右侧紧凑排布，所有核心按钮一次显示；
+ * 不再把缩放条抬到工具栏上方，也不依赖横向滚动寻找被隐藏的功能。
+ */
+@media (max-width: 820px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .canvas-frame {
+    grid-column: 1;
+    margin: 0;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar {
+    top: auto;
+    right: var(--stage-safe-right);
+    bottom: var(--stage-safe-bottom);
+    left: calc(var(--stage-safe-left) + 176px);
+    display: block;
+    width: auto;
+    height: 54px;
+    max-width: none;
+    max-height: 54px;
+    margin: 0;
+    padding: 4px;
+    overflow: hidden;
+    border: 1px solid var(--line-v3);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: var(--shadow-2-v3);
+    opacity: 1;
+    visibility: visible;
+    backdrop-filter: blur(14px);
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar > .quick-edit-body {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 0;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-section,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-section {
+    width: auto;
+    min-width: 0;
+    height: 44px;
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 3px;
+    padding: 3px 4px;
+    border-radius: 9px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-label,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-label {
+    display: none;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group {
+    width: auto;
+    flex-direction: row;
+    gap: 3px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .tool-group > button {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-edit-toolbar .app-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid {
+    grid-template-columns: repeat(5, 18px);
+    grid-template-rows: repeat(2, 18px);
+    gap: 2px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid > button,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid > button,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker,
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button {
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+    min-height: 18px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .quick-color-grid > button i,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .quick-color-grid > button i {
+    width: 14px;
+    height: 14px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button::after,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .rail-color-picker .color-picker-button::after {
+    font-size: 14px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-command-dock,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-command-dock {
+    top: auto;
+    right: auto;
+    bottom: var(--stage-safe-bottom);
+    left: var(--stage-safe-left);
+    display: flex;
+    width: 168px;
+    max-width: 168px;
+    min-height: 54px;
+    padding: 4px;
+    opacity: .96;
+    visibility: visible;
+    transform: none;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-view-controls,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-view-controls {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-zoom-control,
+  .app-shell .center-stage.force-landscape:is(:fullscreen, .is-fullscreen) .canvas-zoom-control {
+    display: flex;
+    width: 126px;
+    min-width: 0;
+    min-height: 34px;
+    padding-inline: 6px;
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* 极窄横屏进一步压缩左侧缩放占位，仍然保留完整进度条和全部编辑组。 */
+@media (max-width: 620px) and (orientation: landscape),
+       (max-height: 380px) and (pointer: coarse) {
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) > .quick-edit-toolbar {
+    left: calc(var(--stage-safe-left) + 150px);
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-command-dock {
+    width: 142px;
+    max-width: 142px;
+  }
+
+  .app-shell .center-stage:is(:fullscreen, .is-fullscreen) .canvas-zoom-control {
+    width: 100px;
+  }
+}
+
 /* 微信等环境无法锁定横屏时由父级旋转兜底，工具布局仍按横屏安全区排列。 */
 .center-stage.force-landscape .studio-mobile-nav {
   position: absolute;
